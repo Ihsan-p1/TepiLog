@@ -38,7 +38,8 @@ class TepiLogApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'TepiLog',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
+      theme: AppTheme.darkTheme,
+      themeMode: ThemeMode.dark,
       routerConfig: router,
     );
   }

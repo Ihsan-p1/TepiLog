@@ -5,6 +5,8 @@ import 'package:tepilog/features/auth/presentation/screens/login_screen.dart';
 import 'package:tepilog/features/auth/presentation/screens/register_screen.dart';
 import 'package:tepilog/features/map/presentation/screens/home_screen.dart';
 
+import 'package:tepilog/features/map/presentation/screens/location_detail_screen.dart';
+
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
 
@@ -40,6 +42,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/home',
         name: 'home',
         builder: (context, state) => const HomeScreen(),
+      ),
+      GoRoute(
+        path: '/location/:id',
+        name: 'location-detail',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return LocationDetailScreen(locationId: id);
+        },
       ),
     ],
   );

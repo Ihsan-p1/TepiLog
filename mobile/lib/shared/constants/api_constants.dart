@@ -17,4 +17,8 @@ class ApiConstants {
 
   // Saved
   static const String saved = '/saved';
+
+  // Profile
+  static const String myProfile = '/users/me';
+  static const String myPosts = '/users/me/posts';
 }

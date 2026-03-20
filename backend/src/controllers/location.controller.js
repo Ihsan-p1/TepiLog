@@ -72,8 +72,32 @@ const getTrendingLocations = async (req, res, next) => {
   }
 };
 
+// GET /api/locations/search?q=
+const searchLocations = async (req, res, next) => {
+  try {
+    const { q } = req.query;
+    if (!q || q.length < 2) return res.json([]);
+
+    const locations = await prisma.location.findMany({
+      where: {
+        name: {
+          contains: q,
+          mode: 'insensitive',
+        },
+      },
+      orderBy: { post_count: 'desc' },
+      take: 5,
+    });
+
+    res.json(locations);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getNearbyLocations,
   getLocationDetail,
-  getTrendingLocations
+  getTrendingLocations,
+  searchLocations
 };

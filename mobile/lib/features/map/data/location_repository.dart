@@ -73,4 +73,14 @@ class LocationRepository {
     final List data = response.data;
     return data.map((json) => Location.fromJson(json)).toList();
   }
+
+  Future<List<Location>> searchLocations(String query) async {
+    final response = await _dio.get(
+      ApiConstants.search,
+      queryParameters: {'q': query},
+    );
+
+    final List data = response.data;
+    return data.map((json) => Location.fromJson(json)).toList();
+  }
 }

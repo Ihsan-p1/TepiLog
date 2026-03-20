@@ -105,7 +105,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          // Navigasi ke Upload Screen (Phase 3)
+          context.pushNamed('upload');
         },
         backgroundColor: AppTheme.textPrimary,
         foregroundColor: AppTheme.primary,

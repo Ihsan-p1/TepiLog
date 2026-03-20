@@ -6,6 +6,7 @@ const errorHandler = require('./middleware/errorHandler');
 // Routes
 const authRoutes = require('./routes/auth.routes');
 const locationRoutes = require('./routes/location.routes');
+const postRoutes = require('./routes/post.routes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -23,6 +24,7 @@ app.get('/api/health', (req, res) => {
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/locations', locationRoutes);
+app.use('/api/posts', postRoutes);
 
 // Error handler (harus di paling bawah)
 app.use(errorHandler);

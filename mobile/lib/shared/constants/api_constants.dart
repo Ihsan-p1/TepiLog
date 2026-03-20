@@ -10,6 +10,7 @@ class ApiConstants {
   // Locations
   static const String locations = '/locations';
   static const String trending = '/locations/trending';
+  static const String search = '/locations/search';
 
   // Posts
   static const String posts = '/posts';

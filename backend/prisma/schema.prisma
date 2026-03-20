@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String   @id @default(uuid()) @db.Uuid
+  email      String   @unique @db.VarChar(255)
+  password   String?  @db.VarChar(255)
+  username   String   @unique @db.VarChar(50)
+  avatar_url String?
+  created_at DateTime @default(now())
+
+  posts           Post[]
+  comments        Comment[]
+  saved_locations SavedLocation[]
+
+  @@map("users")
+}
+
+model Location {
+  id         String   @id @default(uuid()) @db.Uuid
+  name       String?  @db.VarChar(255)
+  latitude   Float
+  longitude  Float
+  post_count Int      @default(0)
+  created_at DateTime @default(now())
+
+  posts           Post[]
+  saved_locations SavedLocation[]
+
+  @@map("locations")
+}
+
+model Post {
+  id          String   @id @default(uuid()) @db.Uuid
+  user_id     String   @db.Uuid
+  location_id String   @db.Uuid
+  media_url   String
+  media_type  String   @db.VarChar(10)
+  caption     String?
+  taken_at    DateTime
+  uploaded_at DateTime @default(now())
+
+  user     User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  location Location @relation(fields: [location_id], references: [id], onDelete: Cascade)
+  comments Comment[]
+
+  @@index([location_id, taken_at(sort: Desc)], name: "idx_posts_location_taken")
+  @@map("posts")
+}
+
+model Comment {
+  id         String   @id @default(uuid()) @db.Uuid
+  post_id    String   @db.Uuid
+  user_id    String   @db.Uuid
+  body       String
+  created_at DateTime @default(now())
+
+  post Post @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("comments")
+}
+
+model SavedLocation {
+  user_id     String   @db.Uuid
+  location_id String   @db.Uuid
+  saved_at    DateTime @default(now())
+
+  user     User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  location Location @relation(fields: [location_id], references: [id], onDelete: Cascade)
+
+  @@id([user_id, location_id])
+  @@map("saved_locations")
+}

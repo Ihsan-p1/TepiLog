@@ -70,7 +70,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: AppTheme.primaryDark,
+                        color: AppTheme.textPrimary,
                       ),
                 ),
                 const SizedBox(height: 8),

@@ -41,10 +41,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         infoWindow: InfoWindow(
           title: loc.name ?? 'Lokasi Tanpa Nama',
           snippet: '${loc.postCount} kiriman • Klik untuk detail',
+          onTap: () async {
+            await context.pushNamed('location-detail', pathParameters: {'id': loc.id});
+            // Refresh markers when returning from location detail
+            ref.read(mapProvider.notifier).loadNearbyLocations();
+          },
         ),
-        onTap: () {
-          context.pushNamed('location-detail', pathParameters: {'id': loc.id});
-        },
       );
     }).toSet();
 
@@ -104,8 +106,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          context.pushNamed('upload');
+        onPressed: () async {
+          await context.pushNamed('upload');
+          // Refresh markers after upload
+          ref.read(mapProvider.notifier).loadNearbyLocations();
         },
         backgroundColor: AppTheme.textPrimary,
         foregroundColor: AppTheme.primary,

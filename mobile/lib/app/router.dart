@@ -6,6 +6,7 @@ import 'package:tepilog/features/auth/presentation/screens/register_screen.dart'
 import 'package:tepilog/features/map/presentation/screens/home_screen.dart';
 
 import 'package:tepilog/features/map/presentation/screens/location_detail_screen.dart';
+import 'package:tepilog/features/post/presentation/screens/post_detail_screen.dart';
 import 'package:tepilog/features/post/presentation/screens/upload_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -56,6 +57,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/upload',
         name: 'upload',
         builder: (context, state) => const UploadScreen(),
+      ),
+      GoRoute(
+        path: '/post/:id',
+        name: 'post-detail',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return PostDetailScreen(postId: id);
+        },
       ),
     ],
   );

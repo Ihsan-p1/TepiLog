@@ -6,7 +6,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:tepilog/app/theme.dart';
 import 'package:tepilog/features/map/data/location_repository.dart';
 import 'package:tepilog/features/post/presentation/providers/upload_provider.dart';
+import 'package:tepilog/features/post/presentation/screens/tag_on_map_screen.dart';
 import 'package:tepilog/shared/providers/dio_provider.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class UploadScreen extends ConsumerStatefulWidget {
   const UploadScreen({super.key});
@@ -20,9 +22,10 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
   final _locationNameController = TextEditingController();
   final _picker = ImagePicker();
 
-  // Hardcoded for now — Phase 4+ will use geolocator
-  final double _lat = -6.2088;
-  final double _lng = 106.8456;
+  // Dynamic coordinates from Tag on Map
+  double _lat = -6.2088;
+  double _lng = 106.8456;
+  bool _hasTaggedLocation = false;
 
   @override
   void dispose() {
@@ -237,6 +240,48 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
 
             const SizedBox(height: 20),
 
+            // Tag on Map button
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: OutlinedButton.icon(
+                onPressed: () async {
+                  final result = await Navigator.push<LatLng>(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => TagOnMapScreen(
+                        initialLat: _lat,
+                        initialLng: _lng,
+                      ),
+                    ),
+                  );
+                  if (result != null) {
+                    setState(() {
+                      _lat = result.latitude;
+                      _lng = result.longitude;
+                      _hasTaggedLocation = true;
+                    });
+                  }
+                },
+                icon: Icon(
+                  _hasTaggedLocation ? Icons.check_circle : Icons.map_outlined,
+                  size: 18,
+                ),
+                label: Text(
+                  _hasTaggedLocation
+                      ? 'Lokasi: ${_lat.toStringAsFixed(4)}, ${_lng.toStringAsFixed(4)}'
+                      : 'Tag di Peta',
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: _hasTaggedLocation ? Colors.green : Colors.white,
+                  side: BorderSide(
+                    color: _hasTaggedLocation ? Colors.green.withOpacity(0.5) : AppTheme.border,
+                  ),
+                  minimumSize: const Size(double.infinity, 48),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
             // Caption
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -273,6 +318,11 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                 displayStringForOption: (Location option) => option.name ?? '',
                 onSelected: (Location selection) {
                   _locationNameController.text = selection.name ?? '';
+                  setState(() {
+                    _lat = selection.latitude;
+                    _lng = selection.longitude;
+                    _hasTaggedLocation = true;
+                  });
                 },
                 fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
                   // Sync internal Autocomplete controller with our _locationNameController

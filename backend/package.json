@@ -10,7 +10,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "description": "TepiLog Backend API",
   "dependencies": {
     "@prisma/client": "^6.19.2",

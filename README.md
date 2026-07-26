@@ -307,3 +307,7 @@ The mobile `baseUrl` is read from `String.fromEnvironment('API_BASE_URL')` with 
 - **Location Detail:** Vertical card feed with EXIF overlays and timeline slider
 - **Post Detail:** Scrollable layout with sticky comment input
 
+## License
+
+Released under the [MIT License](LICENSE).
+

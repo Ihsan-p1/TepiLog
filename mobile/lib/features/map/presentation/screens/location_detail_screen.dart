@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:tepilog/app/theme.dart';
 import 'package:tepilog/features/map/data/location_repository.dart';
 import 'package:tepilog/features/post/data/post_repository.dart';
+import 'package:tepilog/shared/constants/api_constants.dart';
 import 'package:tepilog/shared/providers/dio_provider.dart';
 
 class LocationDetailScreen extends ConsumerStatefulWidget {
@@ -27,6 +28,7 @@ class _LocationDetailScreenState extends ConsumerState<LocationDetailScreen> {
 
   List<int> _years = [];
   List<PostModel> _filteredPosts = [];
+  bool _isSaved = false;
 
   @override
   void initState() {
@@ -57,10 +59,27 @@ class _LocationDetailScreenState extends ConsumerState<LocationDetailScreen> {
         _loading = false;
       });
       _applyFilter();
+      _checkSaved();
     } catch (e) {
       debugPrint('LocationDetail error: $e');
       setState(() => _loading = false);
     }
+  }
+
+  Future<void> _checkSaved() async {
+    try {
+      final dio = ref.read(dioProvider);
+      final res = await dio.get('${ApiConstants.saved}/${widget.locationId}/check');
+      setState(() => _isSaved = res.data['saved'] == true);
+    } catch (_) {}
+  }
+
+  Future<void> _toggleSave() async {
+    try {
+      final dio = ref.read(dioProvider);
+      final res = await dio.post('${ApiConstants.saved}/${widget.locationId}');
+      setState(() => _isSaved = res.data['saved'] == true);
+    } catch (_) {}
   }
 
   void _applyFilter() {
@@ -109,6 +128,15 @@ class _LocationDetailScreenState extends ConsumerState<LocationDetailScreen> {
           ),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(
+              _isSaved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+              color: _isSaved ? Colors.white : AppTheme.textSecondary,
+            ),
+            onPressed: _toggleSave,
+          ),
+        ],
       ),
       body: Column(
         children: [

@@ -1,7 +1,17 @@
 # TepiLog
 
+[![CI](https://github.com/Ihsan-p1/TepiLog/actions/workflows/ci.yml/badge.svg)](https://github.com/Ihsan-p1/TepiLog/actions/workflows/ci.yml)
+
 A place-centric photo archive where every location tells its own story across time.
 Document, explore, and compare how places change — shot by shot.
+
+## Demo
+
+> _Screenshots / GIF coming soon._ Drop images under `docs/` and reference them here, e.g.:
+>
+> | Map | Location timeline | Upload wizard |
+> |---|---|---|
+> | ![Map](docs/map.png) | ![Timeline](docs/timeline.png) | ![Upload](docs/upload.png) |
 
 ## Motivation
 
@@ -14,8 +24,13 @@ EXIF timestamps are central to this. When you upload a photo, TepiLog reads the 
 ## Features
 
 ### Authentication
-- Register & login with email + password
-- JWT-based session with automatic refresh via Dio interceptor
+- Register & login with email + password (bcrypt cost 12)
+- Password policy: min 8 chars, must contain a letter and a number
+- JWT access token + **revocable, rotating** refresh token (stored hashed in DB)
+- Refresh-token reuse detection — a replayed token revokes the whole session
+- `POST /api/auth/logout` (single device or all devices) actually invalidates tokens server-side
+- Automatic silent refresh via Dio interceptor
+- Brute-force protection: `helmet` security headers + per-IP rate limiting on auth endpoints
 
 ### Interactive Map (Home)
 - Google Maps with custom dark styling
@@ -70,15 +85,18 @@ EXIF timestamps are central to this. When you upload a photo, TepiLog reads the 
 | Database | PostgreSQL + PostGIS |
 | ORM | Prisma |
 | File Storage | Cloudinary |
-| Auth | JWT + bcrypt |
+| Auth | JWT (access + rotating refresh) + bcrypt |
+| Security | helmet, express-rate-limit, CORS allowlist |
+| Testing / CI | Jest + Supertest, GitHub Actions |
 
 ## API Reference
 
 ### Auth
 ```
-POST   /api/auth/register
-POST   /api/auth/login
-POST   /api/auth/refresh
+POST   /api/auth/register                      # rate-limited
+POST   /api/auth/login                         # rate-limited
+POST   /api/auth/refresh                       # rotates refresh token, revokes old
+POST   /api/auth/logout                        # revoke token(s) — body: { refreshToken } or { all: true }
 ```
 
 ### Locations
@@ -140,10 +158,12 @@ TepiLog/
 │
 ├── backend/
 │   ├── src/
-│   │   ├── index.js
+│   │   ├── index.js              # Server bootstrap (listen)
+│   │   ├── app.js                # Express app wiring (testable, no listen)
 │   │   ├── config/db.js          # Prisma client
 │   │   ├── middleware/
 │   │   │   ├── auth.js           # JWT verification
+│   │   │   ├── rateLimiters.js   # Global + auth-specific rate limits
 │   │   │   └── errorHandler.js
 │   │   ├── controllers/
 │   │   │   ├── auth.controller.js
@@ -159,13 +179,18 @@ TepiLog/
 │   │   │   ├── comment.routes.js
 │   │   │   ├── saved.routes.js
 │   │   │   └── profile.routes.js
-│   │   └── services/
-│   │       ├── cloudinary.service.js
-│   │       └── geo.service.js    # PostGIS query helpers + findOrCreateLocation
-│   └── prisma/
-│       ├── schema.prisma
-│       └── seed.js               # 169 Indonesian seed locations
+│   │   ├── services/
+│   │   │   ├── cloudinary.service.js
+│   │   │   └── geo.service.js    # PostGIS query helpers + findOrCreateLocation
+│   │   └── utils/
+│   │       └── validators.js     # Email + password-strength validation
+│   ├── prisma/
+│   │   ├── schema.prisma
+│   │   ├── migrations/          # incl. refresh_tokens table
+│   │   └── seed.js               # 169 Indonesian seed locations
+│   └── tests/                    # Jest + Supertest (auth flow, rate limiter)
 │
+├── .github/workflows/ci.yml      # CI: Postgres+PostGIS tests, flutter analyze
 └── .env
 ```
 
@@ -196,6 +221,10 @@ CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
 MAPS_API_KEY=your_google_maps_key
+
+# Optional — comma-separated frontend origins allowed by CORS.
+# Leave empty to allow all origins (development only).
+CORS_ORIGIN=
 ```
 
 ### 3. Backend
@@ -211,8 +240,41 @@ npm run dev
 ```bash
 cd mobile
 flutter pub get
+
+# Android emulator (default host alias 10.0.2.2 — no flag needed)
 flutter run
+
+# Physical device / staging / production — point at a reachable HTTPS API
+flutter run --dart-define=API_BASE_URL=https://api.tepilog.app/api
 ```
+
+The API base URL is injected at build time via `--dart-define=API_BASE_URL=...`,
+so no source edit is needed to switch between emulator, device, and production.
+
+## Testing
+
+The backend has an integration test suite (Jest + Supertest) covering the auth
+flow end-to-end against a real Postgres + PostGIS database: password/email
+validation, login, refresh-token **rotation**, **reuse detection**, and logout
+(single + all devices), plus the rate limiter.
+
+Tests run against a **separate** database — `TEST_DATABASE_URL` is required so the
+dev database is never touched. The DB-backed suite is skipped if it isn't set.
+
+```bash
+cd backend
+
+# One-time: create a dedicated test database and apply migrations
+createdb tepilog_test    # or: CREATE DATABASE tepilog_test;
+DATABASE_URL="postgresql://user:pass@localhost:5432/tepilog_test" npx prisma migrate deploy
+
+# Run the suite
+TEST_DATABASE_URL="postgresql://user:pass@localhost:5432/tepilog_test" npm test
+```
+
+CI (GitHub Actions, `.github/workflows/ci.yml`) spins up a `postgis/postgis`
+service, applies migrations, and runs the suite on every push and PR — and also
+runs `flutter analyze` on the mobile app.
 
 ## Key Technical Decisions
 
@@ -227,6 +289,15 @@ When a user uploads a post and tags a location, the backend checks whether any e
 
 ### Cursor-based pagination for post feeds
 Location feeds use cursor pagination (`cursor` + `limit`) rather than offset pagination. For feeds sorted by `taken_at` where new posts can be inserted at any position in the timeline, offset pagination produces inconsistent results. Cursor pagination ensures stable, consistent traversal regardless of new inserts.
+
+### Revocable refresh tokens with rotation
+JWTs are stateless, which makes plain refresh tokens impossible to revoke before expiry — a real problem if one is stolen. TepiLog stores a **SHA-256 hash** of each refresh token in a `refresh_tokens` table keyed by the token's `jti`. On every `/refresh`, the presented token is rotated: the old row is marked revoked and a new pair is issued. If a token that has already been rotated is replayed (reuse), the backend treats it as a theft signal and revokes *all* of that user's sessions. `logout` invalidates tokens server-side — single device or every device. Only the hash is persisted, so a database leak alone can't reconstruct a usable token.
+
+### Defense in depth on the API surface
+`helmet` sets secure HTTP headers; `express-rate-limit` caps requests globally and applies a stricter per-IP budget to `/api/auth` to blunt brute-force attempts (successful logins aren't counted, so legitimate users aren't locked out). CORS origins are an env-driven allowlist, JSON bodies are size-capped, and `trust proxy` is set so limits work correctly behind a reverse proxy. Login compares a bcrypt hash even when the email doesn't exist, avoiding user-enumeration via timing.
+
+### Build-time API configuration
+The mobile `baseUrl` is read from `String.fromEnvironment('API_BASE_URL')` with the Android-emulator alias as a dev default. Switching between emulator, a physical device, staging, and production is a `--dart-define` flag at build time — no source edits, and production builds can be pinned to an HTTPS endpoint.
 
 ## Design
 

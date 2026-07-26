@@ -20,3 +20,6 @@ backend/.env
 .DS_Store
 Thumbs.db
 TepiLog_sdd_tdd.md
+
+# Claude Code
+CLAUDE.md

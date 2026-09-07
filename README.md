@@ -2,59 +2,51 @@
 
 [![CI](https://github.com/Ihsan-p1/TepiLog/actions/workflows/ci.yml/badge.svg)](https://github.com/Ihsan-p1/TepiLog/actions/workflows/ci.yml)
 
-A place-centric photo archive where every location tells its own story across time.
-Document, explore, and compare how places change — shot by shot.
-
-## Demo
-
-> _Screenshots / GIF coming soon._ Drop images under `docs/` and reference them here, e.g.:
->
-> | Map | Location timeline | Upload wizard |
-> |---|---|---|
-> | ![Map](docs/map.png) | ![Timeline](docs/timeline.png) | ![Upload](docs/upload.png) |
+A place-centric photo archive. Every location keeps its own timeline of photos, dated by
+when the shutter fired rather than when someone uploaded them.
 
 ## Motivation
 
-This project started from a personal frustration. As a photographer, I'd often research a location before heading out — scrolling through Google Maps reviews, Instagram geotags, whatever I could find. But the photos were always the best-case version of a place: perfect lighting, ideal conditions, carefully edited. I'd arrive and find something completely different. There was no way to know what a place actually looked like *recently*, from a photographer's perspective.
+This project started from a personal frustration. As a photographer, I'd often research a location before heading out, scrolling through Google Maps reviews, Instagram geotags, whatever I could find. But the photos were always the best-case version of a place: perfect lighting, ideal conditions, carefully edited. I'd arrive and find something completely different. There was no way to know what a place actually looked like *recently*, from a photographer's perspective.
 
-Most platforms are built around people — your feed is shaped by who you follow, not where you want to go. TepiLog flips that. Location is the primary entity. Every post belongs to a place, and every place accumulates a visual timeline contributed by anyone who's been there. The goal isn't to build an audience — it's to build an honest archive.
+Most platforms are built around people: your feed is shaped by who you follow, not where you want to go. TepiLog flips that. Location is the primary entity. Every post belongs to a place, and every place accumulates a visual timeline contributed by anyone who's been there. The goal isn't to build an audience. It's to build an honest archive.
 
-EXIF timestamps are central to this. When you upload a photo, TepiLog reads the `DateTimeOriginal` from the image metadata — the moment the shutter fired, not the moment you uploaded. That distinction matters. A photo taken two years ago tells a different story than one taken last week, and viewers deserve to know which one they're looking at.
+EXIF timestamps are central to this. When you upload a photo, TepiLog reads the `DateTimeOriginal` from the image metadata: the moment the shutter fired, not the moment you uploaded. That distinction matters. A photo taken two years ago tells a different story than one taken last week, and viewers deserve to know which one they're looking at.
 
 ## Features
 
 ### Authentication
 - Register & login with email + password (bcrypt cost 12)
 - Password policy: min 8 chars, must contain a letter and a number
-- JWT access token + **revocable, rotating** refresh token (stored hashed in DB)
-- Refresh-token reuse detection — a replayed token revokes the whole session
+- JWT access token plus a revocable, rotating refresh token, stored hashed in the database
+- Refresh-token reuse detection: a replayed token revokes the whole session
 - `POST /api/auth/logout` (single device or all devices) actually invalidates tokens server-side
 - Automatic silent refresh via Dio interceptor
 - Brute-force protection: `helmet` security headers + per-IP rate limiting on auth endpoints
 
-### Interactive Map (Home)
+### Interactive map (home)
 - Google Maps with custom dark styling
 - Location markers with post count badges
-- Bottom sheet preview on marker tap — location name, post count, recent thumbnails
+- Bottom sheet preview on marker tap, showing location name, post count, and recent thumbnails
 - Tap to navigate to Location Detail
 
-### Location Detail
+### Location detail
 - Chronological photo feed with EXIF timestamp overlays
 - Sort toggle: recent / oldest
 - Timeline slider to filter posts by year range
 - Save/bookmark toggle
 
-### Upload — 3-Step Wizard
-1. **Photo** — Pick from gallery or camera, EXIF auto-detected
-2. **Location** — Autocomplete search from 169 Indonesian seed locations + manual map pin
-3. **Caption** — Optional caption, EXIF preview, publish
+### Upload wizard, 3 steps
+1. Photo: pick from the gallery or the camera, EXIF read automatically
+2. Location: autocomplete search across 169 Indonesian seed locations, or a manual map pin
+3. Caption: optional caption, EXIF preview, publish
 
-### Post Detail
+### Post detail
 - Full photo display with EXIF badge (`taken · 17 Mar 2025, 06:42 WIB`)
 - Caption and location context
 - Live comment section with real-time posting
 
-### Trending Nearby
+### Trending nearby
 - Ranked locations within 50 km radius
 - Sorted by upload activity in the last 7 days
 - Shows distance and post count per location
@@ -64,19 +56,19 @@ EXIF timestamps are central to this. When you upload a photo, TepiLog reads the 
 - Full photo grid of user's posts
 - Logout
 
-## Tech Stack
+## Tech stack
 
 ### Mobile (Flutter)
 | Layer | Technology |
 |---|---|
 | Framework | Flutter |
-| State Management | Riverpod |
+| State management | Riverpod |
 | Maps | Google Maps Flutter Plugin |
-| Image Handling | image_picker + flutter_image_compress |
-| EXIF Extraction | exif |
-| HTTP Client | Dio |
+| Image handling | image_picker + flutter_image_compress |
+| EXIF extraction | exif |
+| HTTP client | Dio |
 | Navigation | GoRouter |
-| Local Cache | Hive |
+| Local cache | Hive |
 
 ### Backend (Node.js)
 | Layer | Technology |
@@ -84,12 +76,12 @@ EXIF timestamps are central to this. When you upload a photo, TepiLog reads the 
 | Runtime | Node.js + Express |
 | Database | PostgreSQL + PostGIS |
 | ORM | Prisma |
-| File Storage | Cloudinary |
+| File storage | Cloudinary |
 | Auth | JWT (access + rotating refresh) + bcrypt |
 | Security | helmet, express-rate-limit, CORS allowlist |
-| Testing / CI | Jest + Supertest, GitHub Actions |
+| Testing and CI | Jest + Supertest, GitHub Actions |
 
-## API Reference
+## API reference
 
 ### Auth
 ```
@@ -135,7 +127,7 @@ GET    /api/users/me                           # Profile + stats
 GET    /api/users/me/posts                     # User's posts
 ```
 
-## Project Structure
+## Project structure
 
 ```
 TepiLog/
@@ -210,7 +202,7 @@ Connect to your PostgreSQL instance and run:
 CREATE EXTENSION IF NOT EXISTS postgis;
 ```
 
-### 2. Environment Variables
+### 2. Environment variables
 
 Create `.env` in the project root:
 ```env
@@ -249,17 +241,17 @@ flutter run --dart-define=API_BASE_URL=https://api.tepilog.app/api
 ```
 
 The API base URL is injected at build time via `--dart-define=API_BASE_URL=...`,
-so no source edit is needed to switch between emulator, device, and production.
+so you can switch between emulator, device, and production without editing any source file.
 
 ## Testing
 
 The backend has an integration test suite (Jest + Supertest) covering the auth
 flow end-to-end against a real Postgres + PostGIS database: password/email
-validation, login, refresh-token **rotation**, **reuse detection**, and logout
+validation, login, refresh-token rotation, reuse detection, and logout
 (single + all devices), plus the rate limiter.
 
-Tests run against a **separate** database — `TEST_DATABASE_URL` is required so the
-dev database is never touched. The DB-backed suite is skipped if it isn't set.
+Tests run against a separate database. `TEST_DATABASE_URL` is required, so the dev
+database is never touched. The DB-backed suite is skipped if it isn't set.
 
 ```bash
 cd backend
@@ -273,39 +265,39 @@ TEST_DATABASE_URL="postgresql://user:pass@localhost:5432/tepilog_test" npm test
 ```
 
 CI (GitHub Actions, `.github/workflows/ci.yml`) spins up a `postgis/postgis`
-service, applies migrations, and runs the suite on every push and PR — and also
-runs `flutter analyze` on the mobile app.
+service, applies migrations, and runs the suite on every push and pull request, plus `flutter analyze` on the mobile
+app.
 
-## Key Technical Decisions
+## Key technical decisions
 
 ### EXIF timestamp over upload time
-Every post displays the timestamp from the image's EXIF metadata (`DateTimeOriginal`), not the time of upload. This is intentional — a photo taken two years ago and uploaded today should be read as a historical record, not a current one. If EXIF data is unavailable, the post is labeled accordingly rather than silently falling back to upload time.
+Every post displays the timestamp from the image's EXIF metadata (`DateTimeOriginal`), not the time of upload. A photo taken two years ago and uploaded today should read as a historical record, not a current one. If EXIF data is unavailable, the post is labeled accordingly rather than silently falling back to upload time.
 
 ### Geospatial deduplication via PostGIS
 When a user uploads a post and tags a location, the backend checks whether any existing location in the database falls within a 50-meter radius of the submitted coordinates. If a match is found, the post is attached to that location instead of creating a new one. This keeps the map clean and prevents the same physical place from accumulating multiple fragmented pins. The logic lives in `geo.service.js` as `findOrCreateLocation`.
 
 ### Place-centric data model
-`Location` is the central entity — not `User`. Posts belong to locations. Trending is ranked by location activity. The map is the primary navigation surface. This is a deliberate architectural choice that constrains the feature set but keeps the core use case coherent: understanding a place over time, not building a following.
+`Location` is the central entity, not `User`. Posts belong to locations. Trending is ranked by location activity. The map is the primary navigation surface. That choice constrains the feature set, but it keeps the core use case coherent: understanding a place over time instead of building a following.
 
 ### Cursor-based pagination for post feeds
-Location feeds use cursor pagination (`cursor` + `limit`) rather than offset pagination. For feeds sorted by `taken_at` where new posts can be inserted at any position in the timeline, offset pagination produces inconsistent results. Cursor pagination ensures stable, consistent traversal regardless of new inserts.
+Location feeds use cursor pagination (`cursor` + `limit`) rather than offset pagination. For feeds sorted by `taken_at` where new posts can be inserted at any position in the timeline, offset pagination produces inconsistent results. Cursor pagination stays stable wherever a new post lands in the timeline.
 
 ### Revocable refresh tokens with rotation
-JWTs are stateless, which makes plain refresh tokens impossible to revoke before expiry — a real problem if one is stolen. TepiLog stores a **SHA-256 hash** of each refresh token in a `refresh_tokens` table keyed by the token's `jti`. On every `/refresh`, the presented token is rotated: the old row is marked revoked and a new pair is issued. If a token that has already been rotated is replayed (reuse), the backend treats it as a theft signal and revokes *all* of that user's sessions. `logout` invalidates tokens server-side — single device or every device. Only the hash is persisted, so a database leak alone can't reconstruct a usable token.
+JWTs are stateless, so a plain refresh token cannot be revoked before it expires, which is a real problem once one is stolen. TepiLog stores a SHA-256 hash of each refresh token in a `refresh_tokens` table keyed by the token's `jti`. On every `/refresh`, the presented token is rotated: the old row is marked revoked and a new pair is issued. If a token that has already been rotated is replayed (reuse), the backend treats it as a theft signal and revokes all of that user's sessions. `logout` invalidates tokens server-side, on one device or on every device. Only the hash is persisted, so a database leak alone can't reconstruct a usable token.
 
 ### Defense in depth on the API surface
 `helmet` sets secure HTTP headers; `express-rate-limit` caps requests globally and applies a stricter per-IP budget to `/api/auth` to blunt brute-force attempts (successful logins aren't counted, so legitimate users aren't locked out). CORS origins are an env-driven allowlist, JSON bodies are size-capped, and `trust proxy` is set so limits work correctly behind a reverse proxy. Login compares a bcrypt hash even when the email doesn't exist, avoiding user-enumeration via timing.
 
 ### Build-time API configuration
-The mobile `baseUrl` is read from `String.fromEnvironment('API_BASE_URL')` with the Android-emulator alias as a dev default. Switching between emulator, a physical device, staging, and production is a `--dart-define` flag at build time — no source edits, and production builds can be pinned to an HTTPS endpoint.
+The mobile `baseUrl` is read from `String.fromEnvironment('API_BASE_URL')` with the Android-emulator alias as a dev default. Switching between emulator, a physical device, staging, and production is one `--dart-define` flag at build time, and a production build can be pinned to an HTTPS endpoint.
 
 ## Design
 
-- **Theme:** Dark monochromatic — `#1C1C1E` base, Plus Jakarta Sans
-- **Navigation:** Bottom nav bar (map · trending · upload · profile)
-- **Upload:** 3-step wizard with step progress indicator
-- **Location Detail:** Vertical card feed with EXIF overlays and timeline slider
-- **Post Detail:** Scrollable layout with sticky comment input
+- Theme: dark monochromatic, `#1C1C1E` base, Plus Jakarta Sans
+- Navigation: bottom nav bar with map, trending, upload, and profile
+- Upload: 3-step wizard with a step progress indicator
+- Location detail: vertical card feed with EXIF overlays and a timeline slider
+- Post detail: scrollable layout with a sticky comment input
 
 ## License
 

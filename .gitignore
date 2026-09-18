@@ -23,3 +23,8 @@ TepiLog_sdd_tdd.md
 
 # Claude Code
 CLAUDE.md
+
+# AI assistant files, local only
+.claude/
+docs/superpowers/
+AUDIT.md

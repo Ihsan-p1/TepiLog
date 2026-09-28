@@ -13,7 +13,6 @@ import 'package:tepilog/features/trending/presentation/screens/trending_screen.d
 import 'package:tepilog/features/profile/presentation/screens/profile_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
-final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);

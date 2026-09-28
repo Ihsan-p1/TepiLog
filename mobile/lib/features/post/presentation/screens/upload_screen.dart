@@ -329,7 +329,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
           style: OutlinedButton.styleFrom(
             foregroundColor: _hasTaggedLocation ? Colors.green : Colors.white,
             side: BorderSide(
-              color: _hasTaggedLocation ? Colors.green.withOpacity(0.5) : AppTheme.border,
+              color: _hasTaggedLocation ? Colors.green.withValues(alpha: 0.5) : AppTheme.border,
             ),
             minimumSize: const Size(double.infinity, 48),
           ),
@@ -559,10 +559,10 @@ class _StepChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: active ? Colors.white.withOpacity(0.1) : Colors.transparent,
+        color: active ? Colors.white.withValues(alpha: 0.1) : Colors.transparent,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: active ? Colors.white.withOpacity(0.3) : AppTheme.border,
+          color: active ? Colors.white.withValues(alpha: 0.3) : AppTheme.border,
         ),
       ),
       child: Row(

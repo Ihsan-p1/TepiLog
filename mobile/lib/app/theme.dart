@@ -39,7 +39,7 @@ class AppTheme {
         ),
       ),
       appBarTheme: AppBarTheme(
-        backgroundColor: background.withOpacity(0.8),
+        backgroundColor: background.withValues(alpha: 0.8),
         foregroundColor: textPrimary,
         elevation: 0,
         centerTitle: true,

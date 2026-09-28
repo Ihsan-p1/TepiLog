@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tepilog/features/post/data/post_repository.dart';
 import 'package:tepilog/shared/providers/dio_provider.dart';
@@ -84,7 +85,7 @@ class UploadNotifier extends Notifier<UploadState> {
         createdPost: post,
       );
     } catch (e) {
-      print('Upload error detailed: $e');
+      debugPrint('Upload error detailed: $e');
       state = state.copyWith(
         status: UploadStatus.error,
         error: 'Gagal mengupload foto. Silakan coba lagi.',

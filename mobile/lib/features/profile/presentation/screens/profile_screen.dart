@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:dio/dio.dart';
 import 'package:tepilog/app/theme.dart';
 import 'package:tepilog/features/auth/presentation/providers/auth_provider.dart';
 import 'package:tepilog/features/post/data/post_repository.dart';

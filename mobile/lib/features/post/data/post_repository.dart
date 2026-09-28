@@ -121,9 +121,9 @@ class PostRepository {
       'photo': await MultipartFile.fromFile(photo.path, filename: photo.path.split('/').last),
       'latitude': latitude.toString(),
       'longitude': longitude.toString(),
-      if (caption != null) 'caption': caption,
+      'caption': ?caption,
       'taken_at': (takenAt ?? DateTime.now()).toIso8601String(),
-      if (locationName != null) 'location_name': locationName,
+      'location_name': ?locationName,
     });
 
     final response = await _dio.post(
@@ -145,7 +145,7 @@ class PostRepository {
       queryParameters: {
         'location_id': locationId,
         'limit': limit,
-        if (cursor != null) 'cursor': cursor,
+        'cursor': ?cursor,
       },
     );
 

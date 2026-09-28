@@ -14,7 +14,6 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  GoogleMapController? _mapController;
   Location? _selectedLocation;
 
   final String _darkMapStyle = '''
@@ -58,9 +57,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               zoom: 15,
             ),
             markers: markers,
+            style: _darkMapStyle,
             onMapCreated: (controller) {
-              _mapController = controller;
-              _mapController!.setMapStyle(_darkMapStyle);
               ref.read(mapProvider.notifier).loadNearbyLocations();
             },
             onCameraIdle: () {
@@ -87,7 +85,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: AppTheme.surface.withOpacity(0.9),
+                color: AppTheme.surface.withValues(alpha: 0.9),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: AppTheme.border, width: 0.5),
               ),
@@ -124,7 +122,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppTheme.surface.withOpacity(0.95),
+                    color: AppTheme.surface.withValues(alpha: 0.95),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: AppTheme.border, width: 0.5),
                   ),
@@ -157,7 +155,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           Text(
                             'Ketuk untuk detail →',
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.6),
+                              color: Colors.white.withValues(alpha: 0.6),
                               fontSize: 12,
                             ),
                           ),

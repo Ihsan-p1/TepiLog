@@ -108,10 +108,6 @@ class _LocationDetailScreenState extends ConsumerState<LocationDetailScreen> {
       );
     }
 
-    final selectedYear = _years.isNotEmpty
-        ? _years[(_sliderValue * (_years.length - 1)).round()]
-        : DateTime.now().year;
-
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -181,7 +177,7 @@ class _LocationDetailScreenState extends ConsumerState<LocationDetailScreen> {
                         activeTrackColor: Colors.white,
                         inactiveTrackColor: Colors.white24,
                         thumbColor: Colors.white,
-                        overlayColor: Colors.white.withOpacity(0.2),
+                        overlayColor: Colors.white.withValues(alpha: 0.2),
                         trackHeight: 2,
                         thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
                       ),
@@ -271,7 +267,7 @@ class _SortToggle extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
         decoration: BoxDecoration(
-          color: active ? Colors.white.withOpacity(0.1) : Colors.transparent,
+          color: active ? Colors.white.withValues(alpha: 0.1) : Colors.transparent,
           borderRadius: BorderRadius.circular(14),
         ),
         child: Text(
@@ -378,7 +374,7 @@ class _PostCard extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.6),
+                        color: Colors.black.withValues(alpha: 0.6),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(

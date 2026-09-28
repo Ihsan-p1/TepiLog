@@ -20,7 +20,6 @@ class TagOnMapScreen extends StatefulWidget {
 
 class _TagOnMapScreenState extends State<TagOnMapScreen> {
   late LatLng _selectedPosition;
-  GoogleMapController? _mapController;
 
   final String _darkMapStyle = '''
 [
@@ -72,10 +71,7 @@ class _TagOnMapScreenState extends State<TagOnMapScreen> {
               target: _selectedPosition,
               zoom: 16,
             ),
-            onMapCreated: (controller) {
-              _mapController = controller;
-              _mapController!.setMapStyle(_darkMapStyle);
-            },
+            style: _darkMapStyle,
             onTap: (LatLng position) {
               setState(() => _selectedPosition = position);
             },
@@ -100,7 +96,7 @@ class _TagOnMapScreenState extends State<TagOnMapScreen> {
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppTheme.surface.withOpacity(0.9),
+                color: AppTheme.surface.withValues(alpha: 0.9),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: AppTheme.border, width: 0.5),
               ),

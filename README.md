@@ -301,5 +301,6 @@ The mobile `baseUrl` is read from `String.fromEnvironment('API_BASE_URL')` with 
 
 ## License
 
-Released under the [MIT License](LICENSE).
+Released under the [MIT License](LICENSE). The demo photos in `mobile/assets/demo/prau/` are not
+covered by it; they are © Tomorrow, all rights reserved (see `mobile/assets/demo/LICENSE`).
 

@@ -1,0 +1,222 @@
+{
+  "users": [
+    {
+      "id": "seed-user-tomorrow",
+      "email": "tomorrow@demo.local",
+      "username": "tomorrow",
+      "avatar_url": null,
+      "created_at": "2025-06-01T00:00:00.000Z"
+    }
+  ],
+  "locations": [
+    {
+      "id": "seed-loc-prau",
+      "name": "Gunung Prau",
+      "latitude": -7.1867,
+      "longitude": 109.9228,
+      "created_at": "2025-06-01T00:00:00.000Z"
+    }
+  ],
+  "posts": [
+    {
+      "id": "seed-post-01",
+      "user_id": "seed-user-tomorrow",
+      "location_id": "seed-loc-prau",
+      "media_url": "asset:assets/demo/prau/prau-01.jpg",
+      "media_type": "photo",
+      "caption": null,
+      "taken_at": "2025-05-27T22:15:05.000Z",
+      "uploaded_at": "2025-06-01T00:00:00.000Z"
+    },
+    {
+      "id": "seed-post-02",
+      "user_id": "seed-user-tomorrow",
+      "location_id": "seed-loc-prau",
+      "media_url": "asset:assets/demo/prau/prau-02.jpg",
+      "media_type": "photo",
+      "caption": null,
+      "taken_at": "2025-05-27T22:25:42.000Z",
+      "uploaded_at": "2025-06-01T00:00:00.000Z"
+    },
+    {
+      "id": "seed-post-03",
+      "user_id": "seed-user-tomorrow",
+      "location_id": "seed-loc-prau",
+      "media_url": "asset:assets/demo/prau/prau-03.jpg",
+      "media_type": "photo",
+      "caption": null,
+      "taken_at": "2025-05-27T22:25:46.000Z",
+      "uploaded_at": "2025-06-01T00:00:00.000Z"
+    },
+    {
+      "id": "seed-post-04",
+      "user_id": "seed-user-tomorrow",
+      "location_id": "seed-loc-prau",
+      "media_url": "asset:assets/demo/prau/prau-04.jpg",
+      "media_type": "photo",
+      "caption": null,
+      "taken_at": "2025-05-27T22:25:50.000Z",
+      "uploaded_at": "2025-06-01T00:00:00.000Z"
+    },
+    {
+      "id": "seed-post-05",
+      "user_id": "seed-user-tomorrow",
+      "location_id": "seed-loc-prau",
+      "media_url": "asset:assets/demo/prau/prau-05.jpg",
+      "media_type": "photo",
+      "caption": null,
+      "taken_at": "2025-05-27T22:25:57.000Z",
+      "uploaded_at": "2025-06-01T00:00:00.000Z"
+    },
+    {
+      "id": "seed-post-06",
+      "user_id": "seed-user-tomorrow",
+      "location_id": "seed-loc-prau",
+      "media_url": "asset:assets/demo/prau/prau-06.jpg",
+      "media_type": "photo",
+      "caption": null,
+      "taken_at": "2025-05-27T22:40:35.000Z",
+      "uploaded_at": "2025-06-01T00:00:00.000Z"
+    },
+    {
+      "id": "seed-post-07",
+      "user_id": "seed-user-tomorrow",
+      "location_id": "seed-loc-prau",
+      "media_url": "asset:assets/demo/prau/prau-07.jpg",
+      "media_type": "photo",
+      "caption": null,
+      "taken_at": "2025-05-27T22:42:58.000Z",
+      "uploaded_at": "2025-06-01T00:00:00.000Z"
+    },
+    {
+      "id": "seed-post-08",
+      "user_id": "seed-user-tomorrow",
+      "location_id": "seed-loc-prau",
+      "media_url": "asset:assets/demo/prau/prau-08.jpg",
+      "media_type": "photo",
+      "caption": null,
+      "taken_at": "2025-05-27T22:43:13.000Z",
+      "uploaded_at": "2025-06-01T00:00:00.000Z"
+    },
+    {
+      "id": "seed-post-09",
+      "user_id": "seed-user-tomorrow",
+      "location_id": "seed-loc-prau",
+      "media_url": "asset:assets/demo/prau/prau-09.jpg",
+      "media_type": "photo",
+      "caption": null,
+      "taken_at": "2025-05-27T22:43:21.000Z",
+      "uploaded_at": "2025-06-01T00:00:00.000Z"
+    },
+    {
+      "id": "seed-post-10",
+      "user_id": "seed-user-tomorrow",
+      "location_id": "seed-loc-prau",
+      "media_url": "asset:assets/demo/prau/prau-10.jpg",
+      "media_type": "photo",
+      "caption": null,
+      "taken_at": "2025-05-27T22:43:36.000Z",
+      "uploaded_at": "2025-06-01T00:00:00.000Z"
+    },
+    {
+      "id": "seed-post-11",
+      "user_id": "seed-user-tomorrow",
+      "location_id": "seed-loc-prau",
+      "media_url": "asset:assets/demo/prau/prau-11.jpg",
+      "media_type": "photo",
+      "caption": null,
+      "taken_at": "2025-05-28T01:32:13.000Z",
+      "uploaded_at": "2025-06-01T00:00:00.000Z"
+    },
+    {
+      "id": "seed-post-12",
+      "user_id": "seed-user-tomorrow",
+      "location_id": "seed-loc-prau",
+      "media_url": "asset:assets/demo/prau/prau-12.jpg",
+      "media_type": "photo",
+      "caption": null,
+      "taken_at": "2025-05-28T01:32:44.000Z",
+      "uploaded_at": "2025-06-01T00:00:00.000Z"
+    },
+    {
+      "id": "seed-post-13",
+      "user_id": "seed-user-tomorrow",
+      "location_id": "seed-loc-prau",
+      "media_url": "asset:assets/demo/prau/prau-13.jpg",
+      "media_type": "photo",
+      "caption": null,
+      "taken_at": "2025-05-28T01:32:48.000Z",
+      "uploaded_at": "2025-06-01T00:00:00.000Z"
+    },
+    {
+      "id": "seed-post-14",
+      "user_id": "seed-user-tomorrow",
+      "location_id": "seed-loc-prau",
+      "media_url": "asset:assets/demo/prau/prau-14.jpg",
+      "media_type": "photo",
+      "caption": null,
+      "taken_at": "2025-05-28T01:32:52.000Z",
+      "uploaded_at": "2025-06-01T00:00:00.000Z"
+    },
+    {
+      "id": "seed-post-15",
+      "user_id": "seed-user-tomorrow",
+      "location_id": "seed-loc-prau",
+      "media_url": "asset:assets/demo/prau/prau-15.jpg",
+      "media_type": "photo",
+      "caption": null,
+      "taken_at": "2025-05-28T01:32:56.000Z",
+      "uploaded_at": "2025-06-01T00:00:00.000Z"
+    },
+    {
+      "id": "seed-post-16",
+      "user_id": "seed-user-tomorrow",
+      "location_id": "seed-loc-prau",
+      "media_url": "asset:assets/demo/prau/prau-16.jpg",
+      "media_type": "photo",
+      "caption": null,
+      "taken_at": "2025-05-28T01:33:00.000Z",
+      "uploaded_at": "2025-06-01T00:00:00.000Z"
+    },
+    {
+      "id": "seed-post-17",
+      "user_id": "seed-user-tomorrow",
+      "location_id": "seed-loc-prau",
+      "media_url": "asset:assets/demo/prau/prau-17.jpg",
+      "media_type": "photo",
+      "caption": null,
+      "taken_at": "2025-05-28T01:33:54.000Z",
+      "uploaded_at": "2025-06-01T00:00:00.000Z"
+    },
+    {
+      "id": "seed-post-18",
+      "user_id": "seed-user-tomorrow",
+      "location_id": "seed-loc-prau",
+      "media_url": "asset:assets/demo/prau/prau-18.jpg",
+      "media_type": "photo",
+      "caption": null,
+      "taken_at": "2025-05-28T01:33:58.000Z",
+      "uploaded_at": "2025-06-01T00:00:00.000Z"
+    },
+    {
+      "id": "seed-post-19",
+      "user_id": "seed-user-tomorrow",
+      "location_id": "seed-loc-prau",
+      "media_url": "asset:assets/demo/prau/prau-19.jpg",
+      "media_type": "photo",
+      "caption": null,
+      "taken_at": "2025-05-28T01:34:01.000Z",
+      "uploaded_at": "2025-06-01T00:00:00.000Z"
+    },
+    {
+      "id": "seed-post-20",
+      "user_id": "seed-user-tomorrow",
+      "location_id": "seed-loc-prau",
+      "media_url": "asset:assets/demo/prau/prau-20.jpg",
+      "media_type": "photo",
+      "caption": null,
+      "taken_at": "2025-05-28T01:34:09.000Z",
+      "uploaded_at": "2025-06-01T00:00:00.000Z"
+    }
+  ]
+}

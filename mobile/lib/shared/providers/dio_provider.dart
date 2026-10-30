@@ -2,12 +2,20 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tepilog/shared/constants/api_constants.dart';
 import 'package:tepilog/features/auth/data/token_storage.dart';
+import 'package:tepilog/features/demo/data/demo_interceptor.dart';
+import 'package:tepilog/features/demo/presentation/demo_mode_provider.dart';
 
 final tokenStorageProvider = Provider<TokenStorage>((ref) {
   return TokenStorage();
 });
 
 final dioProvider = Provider<Dio>((ref) {
+  // Demo mode: every request is answered locally; no token or refresh logic.
+  if (ref.watch(demoModeProvider)) {
+    return Dio(BaseOptions(baseUrl: ApiConstants.baseUrl))
+      ..interceptors.add(DemoInterceptor(ref.read(demoStoreProvider)));
+  }
+
   final dio = Dio(
     BaseOptions(
       baseUrl: ApiConstants.baseUrl,

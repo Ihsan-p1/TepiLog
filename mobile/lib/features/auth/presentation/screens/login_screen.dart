@@ -147,6 +147,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         )
                       : const Text('Masuk'),
                 ),
+                const SizedBox(height: 12),
+
+                // Offline demo: no account, no server
+                OutlinedButton(
+                  onPressed: authState.status == AuthStatus.loading
+                      ? null
+                      : () => ref.read(authProvider.notifier).enterDemo(),
+                  child: const Text('Coba demo'),
+                ),
                 const SizedBox(height: 16),
 
                 // Register link

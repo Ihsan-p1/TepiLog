@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tepilog/features/auth/data/auth_repository.dart';
 import 'package:tepilog/features/auth/domain/user.dart';
+import 'package:tepilog/features/demo/data/demo_store.dart';
+import 'package:tepilog/features/demo/presentation/demo_mode_provider.dart';
 import 'package:tepilog/shared/providers/dio_provider.dart';
 
 // Auth state
@@ -36,6 +38,10 @@ class AuthNotifier extends Notifier<AuthState> {
   AuthRepository get _authRepo => AuthRepository(ref.read(dioProvider));
 
   Future<void> checkAuth() async {
+    if (ref.read(demoModeProvider)) {
+      state = _demoState;
+      return;
+    }
     final tokenStorage = ref.read(tokenStorageProvider);
     if (tokenStorage.hasToken) {
       final userData = tokenStorage.userData;
@@ -123,7 +129,23 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
+  /// Signs in as the local demo visitor; no server involved.
+  Future<void> enterDemo() async {
+    await ref.read(demoModeProvider.notifier).enter();
+    state = _demoState;
+  }
+
+  static final _demoState = AuthState(
+    status: AuthStatus.authenticated,
+    user: User.fromJson(DemoStore.visitorJson),
+  );
+
   Future<void> logout() async {
+    if (ref.read(demoModeProvider)) {
+      await ref.read(demoModeProvider.notifier).exit();
+      state = const AuthState(status: AuthStatus.unauthenticated);
+      return;
+    }
     final tokenStorage = ref.read(tokenStorageProvider);
     await tokenStorage.clear();
     state = const AuthState(status: AuthStatus.unauthenticated);

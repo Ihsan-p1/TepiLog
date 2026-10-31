@@ -45,6 +45,7 @@ dependencies:
   flutter_image_compress: ^2.4.0
   exif: ^3.3.0
   google_fonts: ^8.0.2
+  path_provider: ^2.1.6
 
 dev_dependencies:
   flutter_test:
@@ -67,6 +68,11 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  # Offline demo mode: seed data and photos (photos are not MIT, see assets/demo/LICENSE)
+  assets:
+    - assets/demo/prau/
+    - assets/demo/seed.json
 
   # To add assets to your application, add an assets section, like this:
   # assets:

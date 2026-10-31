@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:tepilog/app/theme.dart';
+import 'package:tepilog/features/demo/presentation/demo_mode_provider.dart';
 import 'package:tepilog/features/map/data/location_repository.dart';
 import 'package:tepilog/features/post/presentation/providers/upload_provider.dart';
 import 'package:tepilog/features/post/presentation/screens/tag_on_map_screen.dart';
@@ -19,19 +20,34 @@ class UploadScreen extends ConsumerStatefulWidget {
 class _UploadScreenState extends ConsumerState<UploadScreen> {
   final _captionController = TextEditingController();
   final _locationNameController = TextEditingController();
+  // Kept across builds: a new node per build drops focus when the keyboard
+  // rebuilds the screen, and the suggestions only show while focused.
+  final _locationFocus = FocusNode();
   final _picker = ImagePicker();
 
   int _currentStep = 0; // 0=photo, 1=location, 2=caption
-  double _lat = -6.2088;
-  double _lng = 106.8456;
+  late double _lat;
+  late double _lng;
   bool _hasTaggedLocation = false;
   String? _selectedLocationName;
   DateTime? _exifDate;
 
   @override
+  void initState() {
+    super.initState();
+    // The tag map opens here; in demo mode that is the seeded place.
+    final start = ref.read(demoModeProvider)
+        ? kDemoCenter
+        : const LatLng(-6.2088, 106.8456); // Jakarta
+    _lat = start.latitude;
+    _lng = start.longitude;
+  }
+
+  @override
   void dispose() {
     _captionController.dispose();
     _locationNameController.dispose();
+    _locationFocus.dispose();
     super.dispose();
   }
 
@@ -232,7 +248,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
         const SizedBox(height: 8),
         RawAutocomplete<Location>(
           textEditingController: _locationNameController,
-          focusNode: FocusNode(),
+          focusNode: _locationFocus,
           optionsBuilder: (TextEditingValue textEditingValue) async {
             if (textEditingValue.text.length < 2) {
               return const Iterable<Location>.empty();

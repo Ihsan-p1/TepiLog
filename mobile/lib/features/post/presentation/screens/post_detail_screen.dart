@@ -4,6 +4,7 @@ import 'package:tepilog/app/theme.dart';
 import 'package:tepilog/features/post/data/post_repository.dart';
 import 'package:tepilog/shared/constants/api_constants.dart';
 import 'package:tepilog/shared/providers/dio_provider.dart';
+import 'package:tepilog/shared/widgets/tepi_image.dart';
 
 class PostDetailScreen extends ConsumerStatefulWidget {
   final String postId;
@@ -135,19 +136,7 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
                   // Photo
                   AspectRatio(
                     aspectRatio: 4 / 3,
-                    child: Image.network(
-                      post.mediaUrl,
-                      fit: BoxFit.cover,
-                      loadingBuilder: (context, child, progress) {
-                        if (progress == null) return child;
-                        return Container(
-                          color: AppTheme.surface,
-                          child: const Center(
-                            child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.textSecondary),
-                          ),
-                        );
-                      },
-                    ),
+                    child: TepiImage(post.mediaUrl),
                   ),
 
                   // EXIF badge bar

@@ -6,6 +6,7 @@ import 'package:tepilog/features/auth/presentation/providers/auth_provider.dart'
 import 'package:tepilog/features/post/data/post_repository.dart';
 import 'package:tepilog/shared/constants/api_constants.dart';
 import 'package:tepilog/shared/providers/dio_provider.dart';
+import 'package:tepilog/shared/widgets/tepi_image.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -192,22 +193,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             'post-detail',
                             pathParameters: {'id': post.id},
                           ),
-                          child: Image.network(
-                            post.mediaUrl,
-                            fit: BoxFit.cover,
-                            loadingBuilder: (context, child, progress) {
-                              if (progress == null) return child;
-                              return Container(
-                                color: AppTheme.surface,
-                                child: const Center(
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: AppTheme.textSecondary,
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
+                          child: TepiImage(post.mediaUrl),
                         );
                       },
                       childCount: _posts.length,

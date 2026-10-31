@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:tepilog/features/demo/presentation/demo_mode_provider.dart';
 import 'package:tepilog/features/map/data/location_repository.dart';
 import 'package:tepilog/shared/providers/dio_provider.dart';
 
@@ -35,7 +36,9 @@ class MapNotifier extends Notifier<MapState> {
   @override
   MapState build() {
     return MapState(
-      cameraPosition: const LatLng(-6.2088, 106.8456), // Jakarta default
+      cameraPosition: ref.watch(demoModeProvider)
+          ? kDemoCenter
+          : const LatLng(-6.2088, 106.8456), // Jakarta default
     );
   }
 

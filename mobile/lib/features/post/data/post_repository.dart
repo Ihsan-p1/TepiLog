@@ -37,7 +37,7 @@ class PostModel {
       mediaUrl: json['media_url'],
       mediaType: json['media_type'],
       caption: json['caption'],
-      takenAt: DateTime.parse(json['taken_at']),
+      takenAt: DateTime.parse(json['taken_at']).toLocal(),
       uploadedAt: DateTime.parse(json['uploaded_at']),
       userId: json['user_id'],
       locationId: json['location_id'],
@@ -122,7 +122,9 @@ class PostRepository {
       'latitude': latitude.toString(),
       'longitude': longitude.toString(),
       'caption': ?caption,
-      'taken_at': (takenAt ?? DateTime.now()).toIso8601String(),
+      // UTC with a Z: the backend's `new Date()` reads a zoneless string in
+      // the server's own time zone.
+      'taken_at': (takenAt ?? DateTime.now()).toUtc().toIso8601String(),
       'location_name': ?locationName,
     });
 

@@ -59,7 +59,7 @@ jobs:
         run: npm test
 
   mobile:
-    name: Mobile (analyze)
+    name: Mobile (analyze, test)
     runs-on: ubuntu-latest
 
     defaults:
@@ -80,3 +80,6 @@ jobs:
 
       - name: Analyze
         run: flutter analyze
+
+      - name: Test
+        run: flutter test

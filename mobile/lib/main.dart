@@ -1,10 +1,18 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:tepilog/app/router.dart';
 import 'package:tepilog/app/theme.dart';
 import 'package:tepilog/features/auth/presentation/providers/auth_provider.dart';
+import 'package:tepilog/features/demo/data/demo_store.dart';
+import 'package:tepilog/features/demo/presentation/demo_mode_provider.dart';
 import 'package:tepilog/shared/providers/dio_provider.dart';
+import 'package:tepilog/shared/widgets/server_wake_gate.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -12,8 +20,19 @@ void main() async {
   // Initialize Hive
   await Hive.initFlutter();
 
+  // Offline demo data, kept in its own Hive box
+  final docs = await getApplicationDocumentsDirectory();
+  final demoStore = DemoStore(
+    box: await Hive.openBox('demo'),
+    loadSeed: () async => jsonDecode(
+        await rootBundle.loadString('assets/demo/seed.json')) as Map<String, dynamic>,
+    uploadsDir: () async => Directory('${docs.path}/demo_uploads'),
+  );
+
   // Create container and initialize token storage
-  final container = ProviderContainer();
+  final container = ProviderContainer(
+    overrides: [demoStoreProvider.overrideWithValue(demoStore)],
+  );
   final tokenStorage = container.read(tokenStorageProvider);
   await tokenStorage.init();
 
@@ -41,6 +60,7 @@ class TepiLogApp extends ConsumerWidget {
       theme: AppTheme.darkTheme,
       themeMode: ThemeMode.dark,
       routerConfig: router,
+      builder: (context, child) => ServerWakeGate(child: child!),
     );
   }
 }

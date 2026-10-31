@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:tepilog/app/theme.dart';
+import 'package:tepilog/features/demo/presentation/demo_mode_provider.dart';
 import 'package:tepilog/features/map/data/location_repository.dart';
 import 'package:tepilog/features/post/presentation/providers/upload_provider.dart';
 import 'package:tepilog/features/post/presentation/screens/tag_on_map_screen.dart';
@@ -25,11 +26,22 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
   final _picker = ImagePicker();
 
   int _currentStep = 0; // 0=photo, 1=location, 2=caption
-  double _lat = -6.2088;
-  double _lng = 106.8456;
+  late double _lat;
+  late double _lng;
   bool _hasTaggedLocation = false;
   String? _selectedLocationName;
   DateTime? _exifDate;
+
+  @override
+  void initState() {
+    super.initState();
+    // The tag map opens here; in demo mode that is the seeded place.
+    final start = ref.read(demoModeProvider)
+        ? kDemoCenter
+        : const LatLng(-6.2088, 106.8456); // Jakarta
+    _lat = start.latitude;
+    _lng = start.longitude;
+  }
 
   @override
   void dispose() {

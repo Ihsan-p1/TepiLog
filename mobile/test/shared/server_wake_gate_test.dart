@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tepilog/features/auth/data/token_storage.dart';
 import 'package:tepilog/features/demo/presentation/demo_mode_provider.dart';
+import 'package:tepilog/shared/providers/dio_provider.dart';
 import 'package:tepilog/shared/providers/server_status_provider.dart';
 import 'package:tepilog/shared/widgets/server_wake_gate.dart';
 
@@ -16,7 +18,13 @@ class _FakeDemoMode extends DemoModeNotifier {
   Future<void> enter() async => state = true;
 }
 
-const _wakeText = 'Server sedang bangun, biasanya sekitar 1 menit';
+/// No Hive box in widget tests; entering demo only needs clear() to succeed.
+class _NoTokens extends TokenStorage {
+  @override
+  Future<void> clear() async {}
+}
+
+const _wakeText ='Server sedang bangun, biasanya sekitar 1 menit';
 const _appText = 'app';
 // Covers both a timeout and an instant refusal, so it names no duration.
 const _failText = 'Server tidak bisa dihubungi.';
@@ -32,6 +40,7 @@ void main() {
     await tester.pumpWidget(ProviderScope(
       overrides: [
         demoModeProvider.overrideWith(_FakeDemoMode.new),
+        tokenStorageProvider.overrideWithValue(_NoTokens()),
         healthPingProvider.overrideWithValue(ping ?? () => reply.future),
       ],
       child: const MaterialApp(
@@ -70,6 +79,25 @@ void main() {
     // Offline the login screen is unreachable, so demo is offered here too.
     expect(find.text('Coba demo'), findsOneWidget);
     expect(find.text(_wakeText), findsNothing);
+  });
+
+  testWidgets('Coba lagi keeps the gate up instead of flashing the app',
+      (tester) async {
+    var calls = 0;
+    await pumpGate(tester, ping: () {
+      calls++;
+      return calls == 1 ? Future.error(Exception('refused')) : reply.future;
+    });
+    await tester.pump();
+
+    await tester.tap(find.text('Coba lagi'));
+    await tester.pump();
+    expect(find.text(_appText), findsNothing);
+    expect(find.text(_wakeText), findsOneWidget);
+
+    reply.complete();
+    await tester.pump();
+    expect(find.text(_appText), findsOneWidget);
   });
 
   testWidgets('no reply in 90 s shows the failure state', (tester) async {

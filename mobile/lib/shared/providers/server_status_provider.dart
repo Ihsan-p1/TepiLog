@@ -46,7 +46,9 @@ class ServerStatusNotifier extends Notifier<ServerStatus> {
     final run = ++_run;
     bool current() => ref.mounted && run == _run;
 
-    state = ServerStatus.checking;
+    // A retry stays on the gate: 'checking' shows the app, which would
+    // flash on screen and fire requests at a server known to be down.
+    state = state == ServerStatus.failed ? ServerStatus.waking : ServerStatus.checking;
     final slow = Timer(kWakeScreenDelay, () {
       if (current() && state == ServerStatus.checking) {
         state = ServerStatus.waking;

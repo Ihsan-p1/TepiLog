@@ -68,6 +68,8 @@ class AuthNotifier extends Notifier<AuthState> {
         password: password,
         username: username,
       );
+      // The user went into demo while this request was in flight.
+      if (ref.read(demoModeProvider)) return;
       final tokenStorage = ref.read(tokenStorageProvider);
       await tokenStorage.saveTokens(
         accessToken: result.tokens.accessToken,
@@ -79,6 +81,7 @@ class AuthNotifier extends Notifier<AuthState> {
         user: result.user,
       );
     } on DioException catch (e) {
+      if (ref.read(demoModeProvider)) return;
       final message =
           e.response?.data?['error'] as String? ?? 'Registrasi gagal';
       state = AuthState(
@@ -86,6 +89,7 @@ class AuthNotifier extends Notifier<AuthState> {
         error: message,
       );
     } catch (e) {
+      if (ref.read(demoModeProvider)) return;
       debugPrint('Register error: $e');
       state = const AuthState(
         status: AuthStatus.unauthenticated,
@@ -104,6 +108,8 @@ class AuthNotifier extends Notifier<AuthState> {
         email: email,
         password: password,
       );
+      // The user went into demo while this request was in flight.
+      if (ref.read(demoModeProvider)) return;
       final tokenStorage = ref.read(tokenStorageProvider);
       await tokenStorage.saveTokens(
         accessToken: result.tokens.accessToken,
@@ -115,6 +121,7 @@ class AuthNotifier extends Notifier<AuthState> {
         user: result.user,
       );
     } on DioException catch (e) {
+      if (ref.read(demoModeProvider)) return;
       final message =
           e.response?.data?['error'] as String? ?? 'Login gagal';
       state = AuthState(
@@ -122,6 +129,7 @@ class AuthNotifier extends Notifier<AuthState> {
         error: message,
       );
     } catch (e) {
+      if (ref.read(demoModeProvider)) return;
       state = const AuthState(
         status: AuthStatus.unauthenticated,
         error: 'Terjadi kesalahan, coba lagi',
@@ -130,7 +138,11 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   /// Signs in as the local demo visitor; no server involved.
+  ///
+  /// Ends any real session first: demo can be entered from the wake screen
+  /// while signed in, and leaving demo must not bring that account back.
   Future<void> enterDemo() async {
+    await ref.read(tokenStorageProvider).clear();
     await ref.read(demoModeProvider.notifier).enter();
     state = _demoState;
   }

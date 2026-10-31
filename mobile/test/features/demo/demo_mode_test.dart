@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -85,4 +87,63 @@ void main() {
 
     expect(c.read(mapProvider).cameraPosition, kDemoCenter);
   });
+
+  test('entering demo ends a real session, so logout leaves no token behind',
+      () async {
+    await tokens.saveTokens(accessToken: 'real-a', refreshToken: 'real-r');
+    final c = containerFor(store);
+    final auth = c.read(authProvider.notifier);
+
+    await auth.enterDemo();
+    await auth.logout();
+
+    expect(tokens.hasToken, isFalse);
+  });
+
+  /// A container whose server answers login only after [reply] completes,
+  /// with success when [ok] is true and a timeout otherwise.
+  ProviderContainer slowLogin(Completer<void> reply, {required bool ok}) {
+    final slowServer = Dio()
+      ..interceptors.add(InterceptorsWrapper(onRequest: (o, h) async {
+        await reply.future;
+        if (!ok) {
+          return h.reject(DioException.receiveTimeout(
+              timeout: const Duration(seconds: 10), requestOptions: o));
+        }
+        h.resolve(Response(requestOptions: o, statusCode: 200, data: {
+          'user': {
+            'id': 'real-user',
+            'email': 'real@x.id',
+            'username': 'real',
+            'avatar_url': null,
+            'created_at': '2025-01-01T00:00:00.000Z',
+          },
+          'accessToken': 'real-a',
+          'refreshToken': 'real-r',
+        }));
+      }));
+    return ProviderContainer.test(overrides: [
+      demoStoreProvider.overrideWithValue(store),
+      tokenStorageProvider.overrideWithValue(tokens),
+      dioProvider.overrideWithValue(slowServer),
+    ]);
+  }
+
+  for (final ok in [true, false]) {
+    test('a login ${ok ? 'reply' : 'timeout'} after entering demo is ignored',
+        () async {
+      final reply = Completer<void>();
+      final c = slowLogin(reply, ok: ok);
+      final auth = c.read(authProvider.notifier);
+
+      final login = auth.login(email: 'real@x.id', password: 'secret');
+      await auth.enterDemo();
+      reply.complete();
+      await login;
+
+      expect(c.read(authProvider).status, AuthStatus.authenticated);
+      expect(c.read(authProvider).user?.username, 'demo');
+      expect(tokens.hasToken, isFalse);
+    });
+  }
 }

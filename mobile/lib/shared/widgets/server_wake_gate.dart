@@ -40,7 +40,7 @@ class ServerWakeGate extends ConsumerWidget {
             const Icon(Icons.cloud_off, size: 48),
             const SizedBox(height: 24),
             const Text(
-              'Server tidak menjawab setelah 90 detik.',
+              'Server tidak bisa dihubungi.',
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),

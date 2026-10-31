@@ -18,6 +18,8 @@ class _FakeDemoMode extends DemoModeNotifier {
 
 const _wakeText = 'Server sedang bangun, biasanya sekitar 1 menit';
 const _appText = 'app';
+// Covers both a timeout and an instant refusal, so it names no duration.
+const _failText = 'Server tidak bisa dihubungi.';
 
 void main() {
   late Completer<void> reply;
@@ -63,6 +65,7 @@ void main() {
     await pumpGate(tester, ping: () async => throw Exception('refused'));
     await tester.pump();
 
+    expect(find.text(_failText), findsOneWidget);
     expect(find.text('Coba lagi'), findsOneWidget);
     // Offline the login screen is unreachable, so demo is offered here too.
     expect(find.text('Coba demo'), findsOneWidget);
@@ -73,7 +76,7 @@ void main() {
     await pumpGate(tester);
     await tester.pump(const Duration(seconds: 90));
 
-    expect(find.text('Server tidak menjawab setelah 90 detik.'), findsOneWidget);
+    expect(find.text(_failText), findsOneWidget);
     expect(find.text('Coba lagi'), findsOneWidget);
   });
 

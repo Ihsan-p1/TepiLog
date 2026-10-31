@@ -19,6 +19,9 @@ class UploadScreen extends ConsumerStatefulWidget {
 class _UploadScreenState extends ConsumerState<UploadScreen> {
   final _captionController = TextEditingController();
   final _locationNameController = TextEditingController();
+  // Kept across builds: a new node per build drops focus when the keyboard
+  // rebuilds the screen, and the suggestions only show while focused.
+  final _locationFocus = FocusNode();
   final _picker = ImagePicker();
 
   int _currentStep = 0; // 0=photo, 1=location, 2=caption
@@ -32,6 +35,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
   void dispose() {
     _captionController.dispose();
     _locationNameController.dispose();
+    _locationFocus.dispose();
     super.dispose();
   }
 
@@ -232,7 +236,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
         const SizedBox(height: 8),
         RawAutocomplete<Location>(
           textEditingController: _locationNameController,
-          focusNode: FocusNode(),
+          focusNode: _locationFocus,
           optionsBuilder: (TextEditingValue textEditingValue) async {
             if (textEditingValue.text.length < 2) {
               return const Iterable<Location>.empty();

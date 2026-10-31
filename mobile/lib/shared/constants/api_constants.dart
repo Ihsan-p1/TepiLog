@@ -12,6 +12,8 @@ class ApiConstants {
     defaultValue: 'http://10.0.2.2:3000/api',
   );
 
+  static const String health = '/health';
+
   // Auth
   static const String register = '/auth/register';
   static const String login = '/auth/login';

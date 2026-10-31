@@ -12,6 +12,7 @@ import 'package:tepilog/features/auth/presentation/providers/auth_provider.dart'
 import 'package:tepilog/features/demo/data/demo_store.dart';
 import 'package:tepilog/features/demo/presentation/demo_mode_provider.dart';
 import 'package:tepilog/shared/providers/dio_provider.dart';
+import 'package:tepilog/shared/widgets/server_wake_gate.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -59,6 +60,7 @@ class TepiLogApp extends ConsumerWidget {
       theme: AppTheme.darkTheme,
       themeMode: ThemeMode.dark,
       routerConfig: router,
+      builder: (context, child) => ServerWakeGate(child: child!),
     );
   }
 }

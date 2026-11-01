@@ -14,6 +14,11 @@ import 'package:tepilog/features/profile/presentation/screens/profile_screen.dar
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
+// The bottom nav has four items but the shell has three branches: upload
+// (nav 2) is pushed full screen, so profile is nav 3 and branch 2.
+int navIndexForBranch(int branch) => branch >= 2 ? branch + 1 : branch;
+int branchForNavIndex(int nav) => nav > 2 ? nav - 1 : nav;
+
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
 
@@ -51,16 +56,17 @@ final routerProvider = Provider<GoRouter>((ref) {
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return MainShell(
-            currentIndex: navigationShell.currentIndex,
+            currentIndex: navIndexForBranch(navigationShell.currentIndex),
             onTabChanged: (index) {
               // Index 2 = Upload, push fullscreen instead of switching tab
               if (index == 2) {
                 context.pushNamed('upload');
                 return;
               }
+              final branch = branchForNavIndex(index);
               navigationShell.goBranch(
-                index > 2 ? index - 1 : index,
-                initialLocation: index == navigationShell.currentIndex,
+                branch,
+                initialLocation: branch == navigationShell.currentIndex,
               );
             },
             child: navigationShell,

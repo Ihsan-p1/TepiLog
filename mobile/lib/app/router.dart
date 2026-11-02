@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tepilog/app/main_shell.dart';
+import 'package:tepilog/app/theme.dart';
 import 'package:tepilog/features/auth/presentation/providers/auth_provider.dart';
 import 'package:tepilog/features/auth/presentation/screens/login_screen.dart';
 import 'package:tepilog/features/auth/presentation/screens/register_screen.dart';
@@ -13,6 +14,15 @@ import 'package:tepilog/features/trending/presentation/screens/trending_screen.d
 import 'package:tepilog/features/profile/presentation/screens/profile_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
+
+// ponytail: screens not yet redesigned keep their dark look in light mode too;
+// each step of the redesign drops its screen from this wrapper.
+Widget _legacy(Widget screen) => Theme(data: AppTheme.dark, child: screen);
+
+// The bottom nav has four items but the shell has three branches: upload
+// (nav 2) is pushed full screen, so profile is nav 3 and branch 2.
+int navIndexForBranch(int branch) => branch >= 2 ? branch + 1 : branch;
+int branchForNavIndex(int nav) => nav > 2 ? nav - 1 : nav;
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
@@ -39,28 +49,29 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/login',
         name: 'login',
-        builder: (context, state) => const LoginScreen(),
+        builder: (context, state) => _legacy(const LoginScreen()),
       ),
       GoRoute(
         path: '/register',
         name: 'register',
-        builder: (context, state) => const RegisterScreen(),
+        builder: (context, state) => _legacy(const RegisterScreen()),
       ),
 
       // Shell with bottom navigation
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return MainShell(
-            currentIndex: navigationShell.currentIndex,
+            currentIndex: navIndexForBranch(navigationShell.currentIndex),
             onTabChanged: (index) {
               // Index 2 = Upload, push fullscreen instead of switching tab
               if (index == 2) {
                 context.pushNamed('upload');
                 return;
               }
+              final branch = branchForNavIndex(index);
               navigationShell.goBranch(
-                index > 2 ? index - 1 : index,
-                initialLocation: index == navigationShell.currentIndex,
+                branch,
+                initialLocation: branch == navigationShell.currentIndex,
               );
             },
             child: navigationShell,
@@ -83,7 +94,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/trending',
                 name: 'trending',
-                builder: (context, state) => const TrendingScreen(),
+                builder: (context, state) => _legacy(const TrendingScreen()),
               ),
             ],
           ),
@@ -93,7 +104,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/profile',
                 name: 'profile',
-                builder: (context, state) => const ProfileScreen(),
+                builder: (context, state) => _legacy(const ProfileScreen()),
               ),
             ],
           ),
@@ -105,7 +116,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/upload',
         name: 'upload',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const UploadScreen(),
+        builder: (context, state) => _legacy(const UploadScreen()),
       ),
       GoRoute(
         path: '/location/:id',

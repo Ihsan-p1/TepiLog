@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:tepilog/app/theme.dart';
 import 'package:tepilog/features/map/data/location_repository.dart';
+import 'package:tepilog/features/map/presentation/widgets/place_card.dart';
+import 'package:tepilog/features/map/presentation/widgets/year_chapters.dart';
 import 'package:tepilog/features/post/data/post_repository.dart';
 import 'package:tepilog/shared/constants/api_constants.dart';
 import 'package:tepilog/shared/providers/dio_provider.dart';
-import 'package:tepilog/shared/widgets/tepi_image.dart';
+import 'package:tepilog/shared/providers/photo_scheme_provider.dart';
 
+/// A place's photos read as chapters, one per year, newest year first.
+/// A place with photos from one year only goes straight to a grid.
 class LocationDetailScreen extends ConsumerStatefulWidget {
   final String locationId;
 
@@ -21,15 +26,15 @@ class LocationDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _LocationDetailScreenState extends ConsumerState<LocationDetailScreen> {
+  final _scroll = ScrollController();
   Location? _location;
-  List<PostModel> _posts = [];
+  List<YearChapter> _chapters = [];
+  List<GlobalKey> _chapterKeys = [];
   bool _loading = true;
-  double _sliderValue = 1.0;
-  bool _sortRecent = true;
-
-  List<int> _years = [];
-  List<PostModel> _filteredPosts = [];
+  bool _failed = false;
   bool _isSaved = false;
+  int _active = 0;
+  double _barHeight = 56;
 
   @override
   void initState() {
@@ -37,33 +42,41 @@ class _LocationDetailScreenState extends ConsumerState<LocationDetailScreen> {
     _loadData();
   }
 
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadData() async {
+    setState(() {
+      _loading = true;
+      _failed = false;
+    });
     try {
       final dio = ref.read(dioProvider);
-      final locRepo = LocationRepository(dio);
-      final postRepo = PostRepository(dio);
+      final location = await LocationRepository(dio).getLocationDetail(widget.locationId);
+      // Every page, so the oldest years get their chapters too.
+      final posts = await PostRepository(dio).getAllPostsByLocation(widget.locationId);
 
-      final location = await locRepo.getLocationDetail(widget.locationId);
-      final feed = await postRepo.getPostsByLocation(locationId: widget.locationId, limit: 50);
-
-      final yearSet = <int>{};
-      for (final p in feed.posts) {
-        yearSet.add(p.takenAt.year);
-      }
-      final years = yearSet.toList()..sort();
-
+      if (!mounted) return;
+      final chapters = chaptersByYear(posts);
       setState(() {
         _location = location;
-        _posts = feed.posts;
-        _years = years.isEmpty ? [DateTime.now().year] : years;
-        _sliderValue = 1.0;
+        _chapters = chapters;
+        _chapterKeys = [for (final _ in chapters) GlobalKey()];
+        _active = 0;
         _loading = false;
       });
-      _applyFilter();
       _checkSaved();
     } catch (e) {
       debugPrint('LocationDetail error: $e');
-      setState(() => _loading = false);
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _failed = true;
+        });
+      }
     }
   }
 
@@ -71,7 +84,7 @@ class _LocationDetailScreenState extends ConsumerState<LocationDetailScreen> {
     try {
       final dio = ref.read(dioProvider);
       final res = await dio.get('${ApiConstants.saved}/${widget.locationId}/check');
-      setState(() => _isSaved = res.data['saved'] == true);
+      if (mounted) setState(() => _isSaved = res.data['saved'] == true);
     } catch (_) {}
   }
 
@@ -79,339 +92,269 @@ class _LocationDetailScreenState extends ConsumerState<LocationDetailScreen> {
     try {
       final dio = ref.read(dioProvider);
       final res = await dio.post('${ApiConstants.saved}/${widget.locationId}');
-      setState(() => _isSaved = res.data['saved'] == true);
+      if (mounted) setState(() => _isSaved = res.data['saved'] == true);
     } catch (_) {}
   }
 
-  void _applyFilter() {
-    if (_years.isEmpty || _posts.isEmpty) {
-      setState(() => _filteredPosts = _posts);
-      return;
-    }
-    final selectedYear = _years[(_sliderValue * (_years.length - 1)).round()];
-    var filtered = _posts.where((p) => p.takenAt.year == selectedYear).toList();
+  void _openPost(PostModel post) =>
+      context.pushNamed('post-detail', pathParameters: {'id': post.id});
 
-    if (_sortRecent) {
-      filtered.sort((a, b) => b.takenAt.compareTo(a.takenAt));
+  /// Scroll offset that puts chapter [i] just under the sticky year bar.
+  double? _offsetOf(int i) {
+    final box = _chapterKeys[i].currentContext?.findRenderObject();
+    if (box == null) return null;
+    return RenderAbstractViewport.of(box).getOffsetToReveal(box, 0).offset - _barHeight;
+  }
+
+  bool _followScroll(ScrollNotification n) {
+    if (_chapters.length < 2 || n.depth != 0) return false;
+    // A chapter counts as being read once its top passes 40% of the screen.
+    final line = _scroll.offset + _scroll.position.viewportDimension * 0.4;
+    var active = 0;
+    for (var i = 0; i < _chapters.length; i++) {
+      final offset = _offsetOf(i);
+      if (offset != null && offset <= line) active = i;
+    }
+    // The last chapter is often too short to reach the bar; at the bottom
+    // of the page it is the one being read.
+    if (_scroll.offset >= _scroll.position.maxScrollExtent - 1) active = _chapters.length - 1;
+    if (active != _active) setState(() => _active = active);
+    return false;
+  }
+
+  void _jumpTo(int i) {
+    final offset = _offsetOf(i);
+    if (offset == null) return;
+    setState(() => _active = i);
+    final target = offset.clamp(0.0, _scroll.position.maxScrollExtent);
+    if (MediaQuery.of(context).disableAnimations) {
+      _scroll.jumpTo(target);
     } else {
-      filtered.sort((a, b) => a.takenAt.compareTo(b.takenAt));
+      _scroll.animateTo(target, duration: const Duration(milliseconds: 420), curve: Curves.easeOutCubic);
     }
-
-    setState(() => _filteredPosts = filtered);
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) {
-      return const Scaffold(
-        backgroundColor: Colors.black,
-        body: Center(child: CircularProgressIndicator(color: Colors.white)),
-      );
-    }
+    final theme = Theme.of(context);
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: theme.brightness == Brightness.light
+          ? SystemUiOverlayStyle.dark
+          : SystemUiOverlayStyle.light,
+      child: Scaffold(
+        body: SafeArea(
+          bottom: false,
+          child: _loading
+              ? Center(child: CircularProgressIndicator(color: theme.colorScheme.onSurfaceVariant))
+              : _failed
+                  ? _failure(theme)
+                  : _content(theme),
+        ),
+      ),
+    );
+  }
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
+  Widget _topButtons() {
+    final scheme = Theme.of(context).colorScheme;
+    final style = IconButton.styleFrom(
+      backgroundColor: scheme.surfaceContainer,
+      foregroundColor: scheme.onSurface,
+    );
+    return Row(
+      children: [
+        IconButton(
+          tooltip: 'Kembali',
+          style: style,
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+          onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: Text(
-          _location?.name ?? 'Lokasi',
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        centerTitle: true,
-        actions: [
+        const Spacer(),
+        if (!_failed)
           IconButton(
-            icon: Icon(
-              _isSaved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
-              color: _isSaved ? Colors.white : AppTheme.textSecondary,
-            ),
+            tooltip: _isSaved ? 'Hapus dari simpanan' : 'Simpan lokasi',
+            style: style,
+            icon: Icon(_isSaved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded, size: 20),
             onPressed: _toggleSave,
           ),
-        ],
-      ),
-      body: Column(
+      ],
+    );
+  }
+
+  Widget _failure(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: Column(
         children: [
-          // Info bar: photo count + sort toggle
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            child: Row(
+          _topButtons(),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  '${_posts.length} photos',
-                  style: const TextStyle(
-                    color: AppTheme.textSecondary,
-                    fontSize: 13,
-                  ),
-                ),
-                const Spacer(),
-                // Sort toggle
-                _SortToggle(
-                  isRecent: _sortRecent,
-                  onChanged: (recent) {
-                    setState(() => _sortRecent = recent);
-                    _applyFilter();
-                  },
-                ),
+                Text('Tempat ini gagal dimuat.', style: theme.textTheme.titleMedium),
+                const SizedBox(height: 4),
+                Text('Periksa koneksi, lalu coba lagi.', style: theme.textTheme.bodySmall),
+                const SizedBox(height: 12),
+                TextButton(onPressed: _loadData, child: const Text('Coba lagi')),
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
 
-          // Timeline slider
-          if (_years.length > 1)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
+  Widget _content(ThemeData theme) {
+    final scheme = theme.colorScheme;
+    final accents = [
+      for (final c in _chapters)
+        ref.watch(photoSchemeProvider((c.posts.first.mediaUrl, theme.brightness))).value?.primary ??
+            scheme.onSurface,
+    ];
+    final postCount = _chapters.fold(0, (n, c) => n + c.posts.length);
+    final bottom = MediaQuery.of(context).padding.bottom + 32;
+    _barHeight = YearBar.heightOf(context);
+
+    return NotificationListener<ScrollNotification>(
+      onNotification: _followScroll,
+      child: CustomScrollView(
+        controller: _scroll,
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    _years.first.toString(),
-                    style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11),
-                  ),
-                  Expanded(
-                    child: SliderTheme(
-                      data: SliderTheme.of(context).copyWith(
-                        activeTrackColor: Colors.white,
-                        inactiveTrackColor: Colors.white24,
-                        thumbColor: Colors.white,
-                        overlayColor: Colors.white.withValues(alpha: 0.2),
-                        trackHeight: 2,
-                        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-                      ),
-                      child: Slider(
-                        value: _sliderValue,
-                        onChanged: (value) {
-                          setState(() => _sliderValue = value);
-                          _applyFilter();
-                        },
-                      ),
-                    ),
-                  ),
-                  const Text(
-                    'now',
-                    style: TextStyle(color: AppTheme.textSecondary, fontSize: 11),
-                  ),
-                ],
-              ),
-            ),
-
-          const SizedBox(height: 8),
-
-          // Card feed
-          Expanded(
-            child: _filteredPosts.isEmpty
-                ? Center(
+                  _topButtons(),
+                  const SizedBox(height: 12),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.photo_camera_outlined, size: 48, color: AppTheme.border),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'Belum ada foto',
-                          style: TextStyle(color: AppTheme.textSecondary),
-                        ),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: _filteredPosts.length,
-                    itemBuilder: (context, index) {
-                      final post = _filteredPosts[index];
-                      return _PostCard(
-                        post: post,
-                        onTap: () => context.pushNamed(
-                          'post-detail',
-                          pathParameters: {'id': post.id},
-                        ),
-                      );
-                    },
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// Sort toggle widget (recent / oldest)
-class _SortToggle extends StatelessWidget {
-  final bool isRecent;
-  final ValueChanged<bool> onChanged;
-
-  const _SortToggle({required this.isRecent, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: AppTheme.border),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _toggleItem('recent', isRecent, () => onChanged(true)),
-          _toggleItem('oldest', !isRecent, () => onChanged(false)),
-        ],
-      ),
-    );
-  }
-
-  Widget _toggleItem(String label, bool active, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-        decoration: BoxDecoration(
-          color: active ? Colors.white.withValues(alpha: 0.1) : Colors.transparent,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: active ? Colors.white : AppTheme.textSecondary,
-            fontSize: 12,
-            fontWeight: active ? FontWeight.w600 : FontWeight.normal,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// Card-based post item
-class _PostCard extends StatelessWidget {
-  final PostModel post;
-  final VoidCallback onTap;
-
-  const _PostCard({required this.post, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Username + time ago
-            if (post.user != null)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Row(
-                  children: [
-                    // Avatar circle
-                    CircleAvatar(
-                      radius: 14,
-                      backgroundColor: AppTheme.surface,
-                      child: Text(
-                        (post.user!.username[0]).toUpperCase(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          '@${post.user!.username}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
+                        Semantics(
+                          header: true,
+                          child: Text(
+                            _location?.name ?? 'Lokasi tanpa nama',
+                            style: theme.textTheme.displaySmall,
                           ),
                         ),
+                        const SizedBox(height: 6),
                         Text(
-                          _timeAgo(post.uploadedAt),
-                          style: const TextStyle(
-                            color: AppTheme.textSecondary,
-                            fontSize: 11,
+                          fotoSpan(
+                            postCount,
+                            _chapters.lastOrNull?.year,
+                            _chapters.firstOrNull?.year,
                           ),
+                          style: theme.textTheme.bodySmall,
                         ),
                       ],
-                    ),
-                  ],
-                ),
-              ),
-
-            // Photo with EXIF overlay
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Stack(
-                children: [
-                  AspectRatio(
-                    aspectRatio: 4 / 3,
-                    child: TepiImage(post.mediaUrl),
-                  ),
-                  // EXIF tag
-                  Positioned(
-                    bottom: 8,
-                    left: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.6),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        'taken · ${_formatDate(post.takenAt)}',
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 10,
-                        ),
-                      ),
                     ),
                   ),
                 ],
               ),
             ),
-
-            // Caption
-            if (post.caption != null && post.caption!.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  post.caption!,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    height: 1.4,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
+          ),
+          if (_chapters.isEmpty)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: Text('Belum ada foto di tempat ini.', style: theme.textTheme.bodySmall),
               ),
+            )
+          else if (_chapters.length == 1) ...[
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 10),
+                child: ChapterTitle(chapter: _chapters.single, accent: accents.single, asChapter: false),
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              sliver: SliverGrid.count(
+                crossAxisCount: 3,
+                mainAxisSpacing: 4,
+                crossAxisSpacing: 4,
+                children: [
+                  for (final post in _chapters.single.posts)
+                    PhotoTile(post: post, radius: 8, onTap: () => _openPost(post)),
+                ],
+              ),
+            ),
+          ] else ...[
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _YearBarDelegate(
+                YearBar(chapters: _chapters, active: _active, accents: accents, onSelect: _jumpTo),
+                _barHeight,
+              ),
+            ),
+            // A Column, not a lazy list: the year bar needs every chapter laid
+            // out to scroll to it. Places have a handful of years.
+            SliverToBoxAdapter(
+              child: Column(
+                children: [
+                  for (final (i, chapter) in _chapters.indexed)
+                    Padding(
+                      key: _chapterKeys[i],
+                      padding: EdgeInsets.only(top: i == 0 ? 0 : 24),
+                      child: YearChapterView(chapter: chapter, accent: accents[i], onOpen: _openPost),
+                    ),
+                ],
+              ),
+            ),
           ],
-        ),
+          SliverToBoxAdapter(child: SizedBox(height: bottom)),
+        ],
       ),
     );
   }
+}
 
-  String _timeAgo(DateTime dt) {
-    final diff = DateTime.now().difference(dt);
-    if (diff.inDays > 365) return '${(diff.inDays / 365).floor()} year ago';
-    if (diff.inDays > 30) return '${(diff.inDays / 30).floor()} month ago';
-    if (diff.inDays > 0) return '${diff.inDays} day${diff.inDays > 1 ? 's' : ''} ago';
-    if (diff.inHours > 0) return '${diff.inHours} hour${diff.inHours > 1 ? 's' : ''} ago';
-    return '${diff.inMinutes} min ago';
+class _YearBarDelegate extends SliverPersistentHeaderDelegate {
+  _YearBarDelegate(this.bar, this.height);
+
+  final YearBar bar;
+  final double height;
+
+  @override
+  double get minExtent => height;
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    // Once photos slide under the pinned bar, a short fade below it hides
+    // the cut edge of the photo underneath. The pinned header paints above
+    // the content, so the fade may hang below its own extent.
+    final ground = Theme.of(context).colorScheme.surface;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Positioned.fill(child: bar),
+        if (overlapsContent)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: -12,
+            height: 12,
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [ground, ground.withValues(alpha: 0)],
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
   }
 
-  String _formatDate(DateTime dt) {
-    final months = [
-      '', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-      'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
-    ];
-    return '${dt.day} ${months[dt.month]} ${dt.year}, '
-        '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-  }
+  @override
+  bool shouldRebuild(_YearBarDelegate old) => true;
 }

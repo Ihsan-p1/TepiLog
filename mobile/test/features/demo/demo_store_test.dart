@@ -48,6 +48,14 @@ void main() {
     expect(locations.where((l) => l['name'] == 'Lokasi Baru'), hasLength(1));
   });
 
+  test('locations carry the newest photo as cover and the taken_at span', () {
+    final loc = store.locations().single;
+
+    expect(loc['cover_url'], 'asset:assets/demo/prau/prau-02.jpg');
+    expect(loc['first_taken_at'], '2025-05-27T22:15:05.000Z');
+    expect(loc['last_taken_at'], '2025-05-28T01:34:09.000Z');
+  });
+
   test('postsByLocation orders by taken_at desc and pages with a cursor', () {
     final first = store.postsByLocation('seed-loc-prau', limit: 2);
     expect(first.data.map((p) => p['id']), ['seed-post-02', 'seed-post-03']);

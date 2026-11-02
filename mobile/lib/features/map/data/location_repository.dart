@@ -8,6 +8,9 @@ class Location {
   final double longitude;
   final int postCount;
   final double? distance;
+  final String? coverUrl;
+  final DateTime? firstTakenAt;
+  final DateTime? lastTakenAt;
 
   Location({
     required this.id,
@@ -16,6 +19,9 @@ class Location {
     required this.longitude,
     required this.postCount,
     this.distance,
+    this.coverUrl,
+    this.firstTakenAt,
+    this.lastTakenAt,
   });
 
   factory Location.fromJson(Map<String, dynamic> json) {
@@ -26,6 +32,9 @@ class Location {
       longitude: (json['longitude'] as num).toDouble(),
       postCount: json['post_count'] ?? 0,
       distance: json['distance'] != null ? (json['distance'] as num).toDouble() : null,
+      coverUrl: json['cover_url'],
+      firstTakenAt: DateTime.tryParse(json['first_taken_at'] ?? ''),
+      lastTakenAt: DateTime.tryParse(json['last_taken_at'] ?? ''),
     );
   }
 }

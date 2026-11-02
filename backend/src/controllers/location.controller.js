@@ -12,13 +12,27 @@ const getNearbyLocations = async (req, res, next) => {
 
     const radiusMeter = parseFloat(radius) || 5000; // default 5km
 
-    // Menggunakan raw SQL via service untuk pencarian radius PostGIS
+    // Menggunakan raw SQL via service untuk pencarian radius PostGIS.
+    // cover_url = foto terbaru (taken_at) untuk pin peta; first/last_taken_at = rentang tahun.
     const locations = await prisma.$queryRaw`
-      SELECT id, name, latitude, longitude, post_count,
-             ST_Distance(coordinates, ST_MakePoint(${parseFloat(lng)}, ${parseFloat(lat)})::geography) as distance
-      FROM locations
+      SELECT l.id, l.name, l.latitude, l.longitude, l.post_count,
+             ST_Distance(l.coordinates, ST_MakePoint(${parseFloat(lng)}, ${parseFloat(lat)})::geography) as distance,
+             cover.media_url AS cover_url,
+             span.first_taken_at, span.last_taken_at
+      FROM locations l
+      LEFT JOIN LATERAL (
+        SELECT p.media_url FROM posts p
+        WHERE p.location_id = l.id
+        ORDER BY p.taken_at DESC
+        LIMIT 1
+      ) cover ON true
+      LEFT JOIN LATERAL (
+        SELECT MIN(p.taken_at) AS first_taken_at, MAX(p.taken_at) AS last_taken_at
+        FROM posts p
+        WHERE p.location_id = l.id
+      ) span ON true
       WHERE ST_DWithin(
-        coordinates,
+        l.coordinates,
         ST_MakePoint(${parseFloat(lng)}, ${parseFloat(lat)})::geography,
         ${radiusMeter}
       )

@@ -58,8 +58,18 @@ class DemoStore {
 
   // ---- Locations ----
 
-  List<Map<String, dynamic>> locations() =>
-      _read('locations').map(_withPostCount).toList();
+  /// Same extra fields as the backend's nearby query: newest photo as cover,
+  /// and the taken_at span of the place's photos.
+  List<Map<String, dynamic>> locations() => _read('locations').map((loc) {
+        final posts = _read('posts').where((p) => p['location_id'] == loc['id']).toList()
+          ..sort(_byTakenAtDesc);
+        return {
+          ..._withPostCount(loc),
+          'cover_url': posts.firstOrNull?['media_url'],
+          'first_taken_at': posts.lastOrNull?['taken_at'],
+          'last_taken_at': posts.firstOrNull?['taken_at'],
+        };
+      }).toList();
 
   Map<String, dynamic>? location(String id) {
     final loc = _find('locations', id);

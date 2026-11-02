@@ -14,7 +14,7 @@ class AppTheme {
   static const Color textSecondary = Color(0xFFA1A1AA); // Zinc 400
   static const Color border = Color(0xFF3F3F46); // Zinc 700
 
-  static const _lightScheme = ColorScheme(
+  static const lightScheme = ColorScheme(
     brightness: Brightness.light,
     primary: Color(0xFF111214),
     onPrimary: Color(0xFFF2F2F0),
@@ -40,7 +40,7 @@ class AppTheme {
     surfaceTint: Colors.transparent,
   );
 
-  static const _darkScheme = ColorScheme(
+  static const darkScheme = ColorScheme(
     brightness: Brightness.dark,
     primary: Color(0xFFF2F2F0),
     onPrimary: Color(0xFF111214),
@@ -66,8 +66,8 @@ class AppTheme {
     surfaceTint: Colors.transparent,
   );
 
-  static ThemeData get light => _build(_lightScheme);
-  static ThemeData get dark => _build(_darkScheme);
+  static ThemeData get light => _build(lightScheme);
+  static ThemeData get dark => _build(darkScheme);
 
   static ThemeData _build(ColorScheme scheme) {
     final base = GoogleFonts.plusJakartaSansTextTheme(

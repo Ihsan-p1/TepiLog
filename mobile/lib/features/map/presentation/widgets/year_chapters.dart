@@ -163,6 +163,7 @@ class PhotoTile extends StatelessWidget {
       button: true,
       label: 'Foto ${t.day} ${_months[t.month - 1]} ${t.year}',
       excludeSemantics: true,
+      onTap: onTap,
       child: AspectRatio(
         aspectRatio: aspectRatio,
         child: ClipRRect(
@@ -225,6 +226,7 @@ class YearBar extends StatelessWidget {
             selected: selected,
             label: 'Tahun ${chapters[i].year}',
             excludeSemantics: true,
+            onTap: () => onSelect(i),
             child: InkWell(
               onTap: () => onSelect(i),
               borderRadius: BorderRadius.circular(24),

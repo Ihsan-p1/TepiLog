@@ -45,6 +45,7 @@ class PlaceCard extends StatelessWidget {
       button: true,
       label: 'Buka $name, ${placeLine(location)}',
       excludeSemantics: true,
+      onTap: onOpen,
       child: Container(
         height: height,
         decoration: BoxDecoration(

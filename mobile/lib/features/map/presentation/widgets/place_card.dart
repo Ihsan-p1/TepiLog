@@ -4,12 +4,16 @@ import 'package:tepilog/features/map/presentation/providers/map_provider.dart';
 import 'package:tepilog/shared/widgets/tepi_image.dart';
 
 /// "20 foto · 2019–2025": photo count and the years the photos span.
-String placeLine(Location location) {
-  final first = location.firstTakenAt?.toLocal().year;
-  final last = location.lastTakenAt?.toLocal().year;
-  final count = '${location.postCount} foto';
-  if (first == null || last == null) return count;
-  return first == last ? '$count · $last' : '$count · $first–$last';
+String placeLine(Location location) => fotoSpan(
+      location.postCount,
+      location.firstTakenAt?.toLocal().year,
+      location.lastTakenAt?.toLocal().year,
+    );
+
+String fotoSpan(int count, int? firstYear, int? lastYear) {
+  final photos = '$count foto';
+  if (firstYear == null || lastYear == null) return photos;
+  return firstYear == lastYear ? '$photos · $lastYear' : '$photos · $firstYear–$lastYear';
 }
 
 /// The line under the map title. Reloads on every camera move keep the old

@@ -124,7 +124,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) {
           final id = state.pathParameters['id']!;
-          return _legacy(LocationDetailScreen(locationId: id));
+          return LocationDetailScreen(locationId: id);
         },
       ),
       GoRoute(

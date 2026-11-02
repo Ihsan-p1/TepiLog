@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tepilog/app/main_shell.dart';
+import 'package:tepilog/app/theme.dart';
 import 'package:tepilog/features/auth/presentation/providers/auth_provider.dart';
 import 'package:tepilog/features/auth/presentation/screens/login_screen.dart';
 import 'package:tepilog/features/auth/presentation/screens/register_screen.dart';
@@ -13,6 +14,10 @@ import 'package:tepilog/features/trending/presentation/screens/trending_screen.d
 import 'package:tepilog/features/profile/presentation/screens/profile_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
+
+// ponytail: screens not yet redesigned keep their dark look in light mode too;
+// each step of the redesign drops its screen from this wrapper.
+Widget _legacy(Widget screen) => Theme(data: AppTheme.dark, child: screen);
 
 // The bottom nav has four items but the shell has three branches: upload
 // (nav 2) is pushed full screen, so profile is nav 3 and branch 2.
@@ -44,12 +49,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/login',
         name: 'login',
-        builder: (context, state) => const LoginScreen(),
+        builder: (context, state) => _legacy(const LoginScreen()),
       ),
       GoRoute(
         path: '/register',
         name: 'register',
-        builder: (context, state) => const RegisterScreen(),
+        builder: (context, state) => _legacy(const RegisterScreen()),
       ),
 
       // Shell with bottom navigation
@@ -89,7 +94,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/trending',
                 name: 'trending',
-                builder: (context, state) => const TrendingScreen(),
+                builder: (context, state) => _legacy(const TrendingScreen()),
               ),
             ],
           ),
@@ -99,7 +104,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/profile',
                 name: 'profile',
-                builder: (context, state) => const ProfileScreen(),
+                builder: (context, state) => _legacy(const ProfileScreen()),
               ),
             ],
           ),
@@ -111,7 +116,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/upload',
         name: 'upload',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const UploadScreen(),
+        builder: (context, state) => _legacy(const UploadScreen()),
       ),
       GoRoute(
         path: '/location/:id',
@@ -119,7 +124,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) {
           final id = state.pathParameters['id']!;
-          return LocationDetailScreen(locationId: id);
+          return _legacy(LocationDetailScreen(locationId: id));
         },
       ),
       GoRoute(
@@ -128,7 +133,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) {
           final id = state.pathParameters['id']!;
-          return PostDetailScreen(postId: id);
+          return _legacy(PostDetailScreen(postId: id));
         },
       ),
     ],

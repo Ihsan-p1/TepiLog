@@ -38,6 +38,7 @@ class _LocationDetailScreenState extends ConsumerState<LocationDetailScreen> {
   bool _failed = false;
   bool _isSaved = false;
   int _active = 0;
+  double _barHeight = 56;
 
   @override
   void initState() {
@@ -119,7 +120,7 @@ class _LocationDetailScreenState extends ConsumerState<LocationDetailScreen> {
   double? _offsetOf(int i) {
     final box = _chapterKeys[i].currentContext?.findRenderObject();
     if (box == null) return null;
-    return RenderAbstractViewport.of(box).getOffsetToReveal(box, 0).offset - YearBar.height;
+    return RenderAbstractViewport.of(box).getOffsetToReveal(box, 0).offset - _barHeight;
   }
 
   bool _followScroll(ScrollNotification n) {
@@ -228,6 +229,7 @@ class _LocationDetailScreenState extends ConsumerState<LocationDetailScreen> {
     ];
     final postCount = _chapters.fold(0, (n, c) => n + c.posts.length);
     final bottom = MediaQuery.of(context).padding.bottom + 32;
+    _barHeight = YearBar.heightOf(context);
 
     return NotificationListener<ScrollNotification>(
       onNotification: _followScroll,
@@ -236,7 +238,7 @@ class _LocationDetailScreenState extends ConsumerState<LocationDetailScreen> {
         slivers: [
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -280,7 +282,7 @@ class _LocationDetailScreenState extends ConsumerState<LocationDetailScreen> {
           else if (_chapters.length == 1) ...[
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 14),
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 10),
                 child: ChapterTitle(chapter: _chapters.single, accent: accents.single, asChapter: false),
               ),
             ),
@@ -292,7 +294,7 @@ class _LocationDetailScreenState extends ConsumerState<LocationDetailScreen> {
                 crossAxisSpacing: 4,
                 children: [
                   for (final post in _chapters.single.posts)
-                    PhotoTile(post: post, radius: 12, onTap: () => _openPost(post)),
+                    PhotoTile(post: post, radius: 8, onTap: () => _openPost(post)),
                 ],
               ),
             ),
@@ -301,6 +303,7 @@ class _LocationDetailScreenState extends ConsumerState<LocationDetailScreen> {
               pinned: true,
               delegate: _YearBarDelegate(
                 YearBar(chapters: _chapters, active: _active, accents: accents, onSelect: _jumpTo),
+                _barHeight,
               ),
             ),
             // A Column, not a lazy list: the year bar needs every chapter laid
@@ -311,7 +314,7 @@ class _LocationDetailScreenState extends ConsumerState<LocationDetailScreen> {
                   for (final (i, chapter) in _chapters.indexed)
                     Padding(
                       key: _chapterKeys[i],
-                      padding: EdgeInsets.only(top: i == 0 ? 12 : 36),
+                      padding: EdgeInsets.only(top: i == 0 ? 0 : 24),
                       child: YearChapterView(chapter: chapter, accent: accents[i], onOpen: _openPost),
                     ),
                 ],
@@ -326,18 +329,48 @@ class _LocationDetailScreenState extends ConsumerState<LocationDetailScreen> {
 }
 
 class _YearBarDelegate extends SliverPersistentHeaderDelegate {
-  _YearBarDelegate(this.bar);
+  _YearBarDelegate(this.bar, this.height);
 
   final YearBar bar;
+  final double height;
 
   @override
-  double get minExtent => YearBar.height;
+  double get minExtent => height;
 
   @override
-  double get maxExtent => YearBar.height;
+  double get maxExtent => height;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) => bar;
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    // Once photos slide under the pinned bar, a short fade below it hides
+    // the cut edge of the photo underneath. The pinned header paints above
+    // the content, so the fade may hang below its own extent.
+    final ground = Theme.of(context).colorScheme.surface;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Positioned.fill(child: bar),
+        if (overlapsContent)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: -12,
+            height: 12,
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [ground, ground.withValues(alpha: 0)],
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
 
   @override
   bool shouldRebuild(_YearBarDelegate old) => true;

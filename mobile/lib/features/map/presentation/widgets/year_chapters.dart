@@ -78,6 +78,8 @@ class ChapterTitle extends StatelessWidget {
 
 /// A year as a chapter: its newest photo as the cover, the year under it,
 /// then the rest of the year in a row that runs off the right edge.
+const _stripGap = 4.0;
+
 class YearChapterView extends StatelessWidget {
   const YearChapterView({
     super.key,
@@ -102,32 +104,36 @@ class YearChapterView extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: PhotoTile(
             post: cover,
-            radius: 24,
-            aspectRatio: 4 / 3,
-            shadow: true,
+            radius: 16,
+            aspectRatio: 3 / 2,
             onTap: () => onOpen(cover),
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 10),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: ChapterTitle(chapter: chapter, accent: accent),
         ),
         if (rest.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 96,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              itemCount: rest.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 8),
-              itemBuilder: (context, i) => SizedBox(
-                width: 96,
-                child: PhotoTile(post: rest[i], radius: 16, onTap: () => onOpen(rest[i])),
+          const SizedBox(height: 8),
+          // Four tiles line up with the cover's edges; a fifth peeks into
+          // the right gutter so the row reads as swipeable.
+          LayoutBuilder(builder: (context, box) {
+            final tile = (box.maxWidth - 40 - 3 * _stripGap) / 4;
+            return SizedBox(
+              height: tile,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                itemCount: rest.length,
+                separatorBuilder: (_, _) => const SizedBox(width: _stripGap),
+                itemBuilder: (context, i) => SizedBox(
+                  width: tile,
+                  child: PhotoTile(post: rest[i], radius: 8, onTap: () => onOpen(rest[i])),
+                ),
               ),
-            ),
-          ),
+            );
+          }),
         ],
       ],
     );
@@ -142,14 +148,12 @@ class PhotoTile extends StatelessWidget {
     required this.radius,
     required this.onTap,
     this.aspectRatio = 1,
-    this.shadow = false,
   });
 
   final PostModel post;
   final double radius;
   final VoidCallback onTap;
   final double aspectRatio;
-  final bool shadow;
 
   @override
   Widget build(BuildContext context) {
@@ -161,22 +165,14 @@ class PhotoTile extends StatelessWidget {
       excludeSemantics: true,
       child: AspectRatio(
         aspectRatio: aspectRatio,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: shape,
-            boxShadow: shadow
-                ? const [BoxShadow(color: Color(0x29000000), blurRadius: 24, offset: Offset(0, 10))]
-                : null,
-          ),
-          child: ClipRRect(
-            borderRadius: shape,
-            child: Material(
-              color: Theme.of(context).colorScheme.surfaceContainerHigh,
-              child: Ink.image(
-                image: tepiImageProvider(post.mediaUrl),
-                fit: BoxFit.cover,
-                child: InkWell(onTap: onTap),
-              ),
+        child: ClipRRect(
+          borderRadius: shape,
+          child: Material(
+            color: Theme.of(context).colorScheme.surfaceContainerHigh,
+            child: Ink.image(
+              image: tepiImageProvider(post.mediaUrl),
+              fit: BoxFit.cover,
+              child: InkWell(onTap: onTap),
             ),
           ),
         ),
@@ -196,7 +192,11 @@ class YearBar extends StatelessWidget {
     required this.onSelect,
   });
 
-  static const height = 64.0;
+  /// 56 dp, taller when large system text grows the chips.
+  static double heightOf(BuildContext context) {
+    final pill = MediaQuery.textScalerOf(context).scale(20) + 12;
+    return (pill > 48 ? pill : 48) + 8;
+  }
 
   final List<YearChapter> chapters;
   final int active;
@@ -211,9 +211,9 @@ class YearBar extends StatelessWidget {
       color: scheme.surface,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 4),
         itemCount: chapters.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 4),
+        separatorBuilder: (_, _) => const SizedBox.shrink(),
         itemBuilder: (context, i) {
           final selected = i == active;
           final fill = selected ? accents[i] : scheme.surfaceContainerHigh;
@@ -231,13 +231,13 @@ class YearBar extends StatelessWidget {
               child: Container(
                 constraints: const BoxConstraints(minWidth: 64, minHeight: 48),
                 alignment: Alignment.center,
-                padding: const EdgeInsets.symmetric(horizontal: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 3),
                 child: AnimatedContainer(
                   duration: MediaQuery.of(context).disableAnimations
                       ? Duration.zero
                       : const Duration(milliseconds: 200),
                   curve: Curves.easeOutCubic,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                   decoration: BoxDecoration(color: fill, borderRadius: BorderRadius.circular(20)),
                   child: Text(
                     '${chapters[i].year}',

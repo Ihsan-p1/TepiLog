@@ -159,6 +159,20 @@ class PostRepository {
     );
   }
 
+  /// Every photo of a place, page by page, newest first.
+  /// ponytail: pages of 50, at most 20; a place past 1000 photos gives its newest 1000.
+  Future<List<PostModel>> getAllPostsByLocation(String locationId) async {
+    final posts = <PostModel>[];
+    String? cursor;
+    for (var page = 0; page < 20; page++) {
+      final feed = await getPostsByLocation(locationId: locationId, cursor: cursor, limit: 50);
+      posts.addAll(feed.posts);
+      cursor = feed.nextCursor;
+      if (!feed.hasMore || cursor == null) break;
+    }
+    return posts;
+  }
+
   /// Get post detail
   Future<PostModel> getPostDetail(String id) async {
     final response = await _dio.get('${ApiConstants.posts}/$id');

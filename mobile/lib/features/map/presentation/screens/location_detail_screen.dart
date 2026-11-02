@@ -26,10 +26,6 @@ class LocationDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _LocationDetailScreenState extends ConsumerState<LocationDetailScreen> {
-  // ponytail: pages of 50, at most 20; a place past 1000 photos shows its newest 1000.
-  static const _pageSize = 50;
-  static const _maxPages = 20;
-
   final _scroll = ScrollController();
   Location? _location;
   List<YearChapter> _chapters = [];
@@ -59,22 +55,9 @@ class _LocationDetailScreenState extends ConsumerState<LocationDetailScreen> {
     });
     try {
       final dio = ref.read(dioProvider);
-      final postRepo = PostRepository(dio);
       final location = await LocationRepository(dio).getLocationDetail(widget.locationId);
-
       // Every page, so the oldest years get their chapters too.
-      final posts = <PostModel>[];
-      String? cursor;
-      for (var page = 0; page < _maxPages; page++) {
-        final feed = await postRepo.getPostsByLocation(
-          locationId: widget.locationId,
-          cursor: cursor,
-          limit: _pageSize,
-        );
-        posts.addAll(feed.posts);
-        cursor = feed.nextCursor;
-        if (!feed.hasMore || cursor == null) break;
-      }
+      final posts = await PostRepository(dio).getAllPostsByLocation(widget.locationId);
 
       if (!mounted) return;
       final chapters = chaptersByYear(posts);

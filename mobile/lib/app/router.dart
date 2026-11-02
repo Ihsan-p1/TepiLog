@@ -133,7 +133,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) {
           final id = state.pathParameters['id']!;
-          return _legacy(PostDetailScreen(postId: id));
+          return PostDetailScreen(postId: id);
         },
       ),
     ],

@@ -34,18 +34,18 @@ void main() {
 
   testWidgets('tab bar items', (tester) async {
     await pump(tester, MainShell(currentIndex: 0, onTabChanged: (_) {}, child: const SizedBox()));
-    expect(tester.getSemantics(find.bySemanticsLabel('Saya')), containsSemantics(hasTapAction: true));
+    expect(tester.getSemantics(find.bySemanticsLabel('Saya')), isSemantics(hasTapAction: true));
   });
 
   testWidgets('place card', (tester) async {
     final place = Location(id: 'p', name: 'Gunung Prau', latitude: 0, longitude: 0, postCount: 1);
     await pump(tester, PlaceCard(location: place, onOpen: () {}));
-    expect(tester.getSemantics(find.bySemanticsLabel(RegExp('^Buka'))), containsSemantics(hasTapAction: true));
+    expect(tester.getSemantics(find.bySemanticsLabel(RegExp('^Buka'))), isSemantics(hasTapAction: true));
   });
 
   testWidgets('photo tile', (tester) async {
     await pump(tester, SizedBox(width: 90, child: PhotoTile(post: _post, radius: 8, onTap: () {})));
-    expect(tester.getSemantics(find.bySemanticsLabel(RegExp('^Foto'))), containsSemantics(hasTapAction: true));
+    expect(tester.getSemantics(find.bySemanticsLabel(RegExp('^Foto'))), isSemantics(hasTapAction: true));
   });
 
   testWidgets('year chip', (tester) async {
@@ -54,6 +54,6 @@ void main() {
       height: 56,
       child: YearBar(chapters: chapters, active: 0, accents: const [Colors.blue], onSelect: (_) {}),
     ));
-    expect(tester.getSemantics(find.bySemanticsLabel('Tahun 2025')), containsSemantics(hasTapAction: true));
+    expect(tester.getSemantics(find.bySemanticsLabel('Tahun 2025')), isSemantics(hasTapAction: true));
   });
 }
